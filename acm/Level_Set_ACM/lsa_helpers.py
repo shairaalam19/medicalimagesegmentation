@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from scipy.ndimage import gaussian_filter
 
 # ---- Helper functions for working with level set acms
 
@@ -61,3 +62,49 @@ def create_circular_mask(square_size, factor=1):
     binary_mask = mask.astype(int)
     
     return binary_mask
+
+# Evalustion functions
+
+def normalize_mask(mask):
+    """
+    Normalize a mask with values 0 and 256 to values 0 and 1.
+    """
+    return (mask > 0).astype(np.float32)
+
+def iou_score(mask1, mask2):
+    """
+    Calculate the Intersection over Union (IoU) score between two binary masks.
+    
+    Parameters:
+    mask1, mask2: numpy arrays
+        Binary masks with values 0 or 1.
+        
+    Returns:
+    float
+        IoU score.
+    """
+    intersection = np.logical_and(mask1, mask2).sum()
+    union = np.logical_or(mask1, mask2).sum()
+    if union == 0:
+        return 0.0  # Avoid division by zero
+    iou = intersection / union
+    return iou
+
+# Higher dice scores are better
+# Perfect dice scores are 1
+def dice_score(mask1, mask2):
+    """
+    Calculate the Dice score between two binary masks using IoU score.
+    
+    Parameters:
+    mask1, mask2: numpy arrays
+        Binary masks with values 0 or 1.
+        
+    Returns:
+    float
+        Dice score.
+    """
+    iou = iou_score(mask1, mask2)
+    dice = 2 * iou / (1 + iou) if iou > 0 else 0.0
+    return dice
+

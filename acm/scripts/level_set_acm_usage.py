@@ -3,6 +3,7 @@ import os
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
 
 # Add the parent directory to the system path
 cwd = os.path.dirname(__file__)
@@ -48,30 +49,38 @@ lsah.displayImage(initial_probability_mask, 'Initial Probability Mask', True, ac
 # --- PART 3: Deriving initial phi and lambda maps from initial probability mask
 
 # img
-f_img = final_img.convert('L')
-img_intesity = np.array(f_img)
-print('Type of intensity image', type(img_intesity)) # numpy.ndarray
-print('Shape of the intensity image: ', img_intesity.shape) # (960, 960)
-print('min and max intensity values of image: ', np.min(img_intesity), np.max(img_intesity)) # 0 236
-lsah.displayImage(img_intesity, 'Intensity Image', True, acm_dir)
+f_img = final_img.convert('L') # converting to grayscale
+img_intensity = np.array(f_img) # converting to array
+img_intensity = gaussian_filter(img_intensity, sigma=0.8)
+print('Type of intensity image', type(img_intensity)) # numpy.ndarray
+print('Shape of the intensity image: ', img_intensity.shape) # (960, 960)
+print('min and max intensity values of image: ', np.min(img_intensity), np.max(img_intensity)) # 0 236
+lsah.displayImage(img_intensity, 'Intensity Image', True, acm_dir)
 
 # lambdas
 map_lambda1, map_lambda2 = lsa.get_lambda_maps(initial_probability_mask)
 print('Shape of map lambda 1: ', map_lambda1.shape) # (960, 960)
+print('Type of map lambda 1: ', type(map_lambda1), map_lambda1.dtype) # <class 'tensorflow.python.framework.ops.EagerTensor'> <dtype: 'float32'>
+print('Min max values of map lambda 1: ', np.min(map_lambda1), np.max(map_lambda1)) # 1.6487212 7.389056
 print('Shape of map lambda 2: ', map_lambda2.shape) # (960, 960)
+print('Type of map lambda 2: ', type(map_lambda2), map_lambda2.dtype) # <class 'tensorflow.python.framework.ops.EagerTensor'> <dtype: 'float32'>
+print('Min max values of map lambda 2: ', np.min(map_lambda2), np.max(map_lambda2)) # 1.6487212 7.389056
 
 # initial phi
 initial_phi = lsa.get_initial_phi(initial_probability_mask)
 print('Shape of initial phi: ', initial_phi.shape) # (960, 960)
+print('Type of initial phi: ', type(initial_phi), initial_phi.dtype) # <class 'numpy.ndarray'> float32
+print('Min max values of initial phi: ', np.min(initial_phi), np.max(initial_phi)) # -480.00104 199.40411
+# phi (signed distance map) is zero on the contour and signed inside and outside.
 
 # --- Initialize parameter elems to active_contour_layer function
-elems = (img_intesity, initial_phi, map_lambda1, map_lambda2)
+elems = (img_intensity, initial_phi, map_lambda1, map_lambda2)
 input_image_size = final_img.size[0]
 print('Input image size: ', input_image_size) # 960
 iter_lim = 20
-
+# TODO - need to review and correct this.
 # --- Call active_contour_layer function and get the final phi output
-final_seg_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size, nu=0.2, mu=0.1, iter_limit = iter_lim, acm_dir=acm_dir, freq=10) 
+final_seg_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size, iter_limit = iter_lim, acm_dir=acm_dir, freq=10) 
 print('Type of final segmentation mask: ', type(final_seg_mask)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
 print('Shape of final segmentation mask: ', final_seg_mask.shape) # (960, 960)
 print('binary mask check for final segmentation mask: ', lsah.is_binary_mask(final_seg_mask)) # True

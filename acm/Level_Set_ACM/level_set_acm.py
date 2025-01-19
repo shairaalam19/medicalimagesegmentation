@@ -135,7 +135,7 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
 # elems: input dictionary containing all inputs to the level-set acm
 # The function iteratively updates a level set function (phi), representing the boundary of an object in an image, based on energy minimization principles.
 # The returned phi is a binary mask that can directly be compared with ground truth mask using dice function.
-def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit = 300, acm_dir=None, freq=None):
+def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit = 300, acm_dir=None, freq=None, gt=None):
     img = elems[0] # input image (I think intensity values) - 2D matrix [pixel values -]
     init_phi = elems[1] # The initial distance map, which defines the starting contour - 2D
     map_lambda1_acl = elems[2] # Weight map influencing the region-based energy terms - inside contour - 2D
@@ -145,7 +145,7 @@ def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit
 
     # Each iteration does one phi update [Represents one iteration of level-set ACM]
     def _body(i, phi_level):
-        print('Level Set ACM Iteration: ', i)
+        print('Level Set ACM Iteration: ', int((i+1).numpy()))
         # --- Identify the pixels within the narrow band (a region around the zero level set of ϕ)
         # band_index: A boolean tensor indicating whether each pixel in ϕ lies within the narrow band defined by narrow_band_width.
         band_index = tf.reduce_all([phi_level <= narrow_band_width, phi_level >= -narrow_band_width], axis=0)
@@ -269,7 +269,9 @@ def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit
         if(acm_dir):
             if((i+1)%freq == 0):
                 phi_img = tf.round(tf.cast((1 - tf.nn.sigmoid(phi_level)), dtype=tf.float32))
-                img_title = 'Mask iter ' + str(int((i+1).numpy()))
+                dice_score = lsah.dice_score(phi_img, gt)
+                img_title = 'Mask iter ' + str(int((i+1).numpy())) + ' - ' + 'Dice:{0:0.4f}'.format(dice_score)
+                print('intermediate dice score: ', dice_score)
                 lsah.displayImage(phi_img, img_title, True, acm_dir)
 
         return (i + 1, phi_level)
