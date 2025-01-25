@@ -8,6 +8,8 @@ sys.path.append(os.path.abspath(os.path.join(cwd, '../Level_Set_ACM')))
 import level_set_acm as lsa
 import lsa_helpers as lsah
 
+make_rectangle = True
+
 # --- Loading input image, ground truth, and initial segmentation
 image_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_input.npy'))
 gt_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_label.npy'))
@@ -18,7 +20,16 @@ gt = lsah.normalize_mask(np.load(gt_path))
 init_seg = np.load(init_seg_path)
 init_seg = init_seg[0, :, :, 0]
 
-acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Demo_brain'))
+acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Demo_brain/DALS/unet_initial_contour'))
+
+if(make_rectangle):
+    acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Demo_brain/DALS/unet_initial_contour_non_square'))
+    # adding two columns at the end with all zero values to make non-square
+    zero_columns = np.zeros((image.shape[0], 2))
+    image = np.hstack((image, zero_columns))
+    gt = np.hstack((gt, zero_columns))
+    init_seg = np.hstack((init_seg, zero_columns))
+
 
 # --- Confirming properties
 
@@ -61,12 +72,14 @@ print('Min max values of initial phi: ', np.min(initial_phi), np.max(initial_phi
 
 # --- Initialize parameter elems to active_contour_layer function
 elems = (image, initial_phi, map_lambda1, map_lambda2)
-input_image_size = image.shape[0]
-print('Input image size: ', input_image_size) # 256
+input_image_size_x = image.shape[1]
+input_image_size_y = image.shape[0]
+print('Input image size x: ', input_image_size_x)
+print('Input image size y: ', input_image_size_y)
 iter_lim = 600
 
 # --- Call active_contour_layer function and get the final phi output
-final_seg = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size, iter_limit = iter_lim, acm_dir=acm_dir, freq=50, gt=gt) 
+final_seg = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, iter_limit = iter_lim, acm_dir=acm_dir, freq=50, gt=gt) 
 print('Type of final segmentation mask: ', type(final_seg)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
 print('Shape of final segmentation mask: ', final_seg.shape) # (256, 256)
 print('unique values in final segmentation: ', np.unique(final_seg)) # [0. 1.]

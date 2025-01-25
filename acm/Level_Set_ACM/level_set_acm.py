@@ -37,7 +37,7 @@ f_size = 15
 # The function re_init_phi aims to reinitialize the level-set function phi 
 # to maintain its signed distance property, which is crucial for the stability 
 # and accuracy of level-set methods in image segmentation.
-def re_init_phi(phi, dt, input_image_size):
+def re_init_phi(phi, dt, input_image_size_x, input_image_size_y):
     # D_left_shift = tf.cast(tf.manip.roll(phi, -1, axis=1), dtype='float32')
     # D_right_shift = tf.cast(tf.manip.roll(phi, 1, axis=1), dtype='float32')
     # D_up_shift = tf.cast(tf.manip.roll(phi, -1, axis=0), dtype='float32')
@@ -79,7 +79,7 @@ def re_init_phi(phi, dt, input_image_size):
     indices2 = tf.stack([neg_y, neg_x], 1)
     indices_final = tf.concat([indices1, indices2], 0)
     update_final = tf.concat([update1, update2], 0)
-    dD = tf.scatter_nd(indices_final, update_final, shape=[input_image_size, input_image_size])
+    dD = tf.scatter_nd(indices_final, update_final, shape=[input_image_size_y, input_image_size_x])
     S = tf.divide(phi, tf.square(phi) + 1)
     phi = phi - tf.multiply(dt * S, dD)
 
@@ -135,13 +135,18 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
 # elems: input dictionary containing all inputs to the level-set acm
 # The function iteratively updates a level set function (phi), representing the boundary of an object in an image, based on energy minimization principles.
 # The returned phi is a binary mask that can directly be compared with ground truth mask using dice function.
-def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit = 300, acm_dir=None, freq=None, gt=None):
+def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu = 5.0, mu = 0.2, iter_limit = 300, acm_dir=None, freq=None, gt=None):
     img = elems[0] # input image (I think intensity values) - 2D matrix [pixel values -]
     init_phi = elems[1] # The initial distance map, which defines the starting contour - 2D
     map_lambda1_acl = elems[2] # Weight map influencing the region-based energy terms - inside contour - 2D
     map_lambda2_acl = elems[3] # Weight map influencing the region-based energy terms - outside contour - 2D
     wind_coef = 3 # Determines the size of the local window around each point for intensity computations. (potential hyperparameter)
     zero_tensor = tf.constant(0, shape=[], dtype="int32") # Represents zero for bounds checking in TensorFlow.
+
+    input_image_size_x = input_image_size
+    input_image_size_y = input_image_size
+    if (input_image_size_2 is not None):
+        input_image_size_y = input_image_size_2
 
     # Each iteration does one phi update [Represents one iteration of level-set ACM]
     def _body(i, phi_level):
@@ -178,8 +183,8 @@ def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit
             local_window_y_max = tf.cast(tf.floor(ynew + window_radius_y), dtype="int32")
             local_window_x_min = tf.maximum(zero_tensor, local_window_x_min)
             local_window_y_min = tf.maximum(zero_tensor, local_window_y_min)
-            local_window_x_max = tf.minimum(tf.cast(input_image_size - 1, dtype="int32"), local_window_x_max)
-            local_window_y_max = tf.minimum(tf.cast(input_image_size - 1, dtype="int32"), local_window_y_max)
+            local_window_x_max = tf.minimum(tf.cast(input_image_size_x - 1, dtype="int32"), local_window_x_max)
+            local_window_y_max = tf.minimum(tf.cast(input_image_size_y - 1, dtype="int32"), local_window_y_max)
             local_image = img[local_window_y_min: local_window_y_max + 1,local_window_x_min: local_window_x_max + 1]
             local_phi = phi_level[local_window_y_min: local_window_y_max + 1,local_window_x_min: local_window_x_max + 1]
             inner = tf.where(local_phi <= 0)
@@ -258,13 +263,13 @@ def active_contour_layer(elems, input_image_size, nu = 5.0, mu = 0.2, iter_limit
         # Assigns d_phi to update_narrow_band to be applied to the narrow band of the level set function.
         update_narrow_band = d_phi
         # Updates phi_level by adding update_narrow_band at the indices specified by band. This operation selectively updates only the points in the narrow band.
-        phi_level = phi_level + tf.scatter_nd([band], tf.cast(update_narrow_band, dtype='float32'),shape=[input_image_size, input_image_size])
+        phi_level = phi_level + tf.scatter_nd([band], tf.cast(update_narrow_band, dtype='float32'),shape=[input_image_size_y, input_image_size_x])
         # Re-initialize ϕ to ensure numerical stability.
         # Reinitializes phi_level using re_init_phi to maintain its signed distance property and ensure numerical stability in subsequent iterations.
         # General note on signed distance property of phi:
         #   A signed distance function phi (x,y) represents the distance from a point (x,y) to the closest point on a contour (or interface), 
         #       with a sign indicating whether the point is inside or outside the contour:
-        phi_level = re_init_phi(phi_level, 0.5, input_image_size)
+        phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
 
         if(acm_dir):
             if((i+1)%freq == 0):
