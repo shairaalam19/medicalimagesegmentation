@@ -5,31 +5,29 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
-# Add the parent directory to the system path
+# Update system path
 cwd = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(cwd, '../Level_Set_ACM')))
-save_dir = os.path.abspath(os.path.join(cwd, '../Results'))
 
 # Imports
 import level_set_acm as lsa
 import lsa_helpers as lsah
 
+# Paths
+image_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L.jpg'))
+gt_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L_1stHO.png'))
+acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Image_01L'))
 
 # --- PART 1: Define the initial image and ground truth
-
-image_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L.jpg'))
 img = Image.open(image_path)
 square_img = lsah.crop_to_square(img)
-
-gt_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L_1stHO.png'))
 gt_img = Image.open(gt_path)
 gt_img_sq = lsah.crop_to_square(gt_img)
-
-acm_dir = os.path.abspath(os.path.join(save_dir, 'Image_01L'))
 
 # to use from now: square_img and gt_img_sq
 final_img = square_img
 final_gt = gt_img_sq
+
 # confirming the properties of these images
 print('Type of image and ground truth', type(final_img), type(final_gt)) # PIL.Image.Image
 print('Shape of the image: ', final_img.size) # (960, 960)
@@ -39,12 +37,15 @@ print('binary mask check for ground truth: ', lsah.is_binary_mask(final_gt)) # T
 lsah.displayImage(final_img, "Image", save_dir=acm_dir)
 lsah.displayImage(final_gt, "Ground Truth", save_dir=acm_dir)
 
-# --- PART 2: Define the initial probability mask
+# --- PART 2: Define the initial probability mask and calculate initial dice score
 initial_probability_mask = lsah.create_circular_mask(final_img.size[0])
 print('Type of initial probability mask: ', type(initial_probability_mask)) #numpy.ndarray
 print('Shape of the initial probability mask: ', initial_probability_mask.shape)
 print('binary mask check for initial probability mask: ', lsah.is_binary_mask(initial_probability_mask))
 lsah.displayImage(initial_probability_mask, 'Initial Probability Mask', True, acm_dir)
+
+dice_score = lsah.dice_score(initial_probability_mask, final_gt)
+print('Initial Dice score: ', dice_score)
 
 # --- PART 3: Deriving initial phi and lambda maps from initial probability mask
 
@@ -77,14 +78,15 @@ print('Min max values of initial phi: ', np.min(initial_phi), np.max(initial_phi
 elems = (img_intensity, initial_phi, map_lambda1, map_lambda2)
 input_image_size = final_img.size[0]
 print('Input image size: ', input_image_size) # 960
-iter_lim = 20
-# TODO - need to review and correct this.
+iter_lim = 100
+
 # --- Call active_contour_layer function and get the final phi output
-final_seg_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size, iter_limit = iter_lim, acm_dir=acm_dir, freq=10) 
+final_seg_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size, iter_limit = iter_lim, acm_dir=acm_dir, freq=50, gt=final_gt) 
 print('Type of final segmentation mask: ', type(final_seg_mask)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
 print('Shape of final segmentation mask: ', final_seg_mask.shape) # (960, 960)
 print('binary mask check for final segmentation mask: ', lsah.is_binary_mask(final_seg_mask)) # True
 lsah.displayImage(final_seg_mask, 'Final Segmentation Mask', True, acm_dir)
 
-
 # --- Compute DICE loss between the phi output and ground truth
+dice_score = lsah.dice_score(final_seg_mask, final_gt)
+print('Final Dice score: ', dice_score)

@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from scipy.ndimage import gaussian_filter
+from PIL import Image
 
 # ---- Helper functions for working with level set acms
 
-# Displaying image
+# Displaying image - to plot the segmentation of the contour
 def displayImage(img, title, grayscale=False, save_dir=None):
     if (grayscale):
         plt.imshow(img, cmap='gray')
@@ -46,7 +47,7 @@ def is_binary_mask(arr):
     unique_elements = np.unique(arr)
     return np.array_equal(unique_elements, [0, 1]) or np.array_equal(unique_elements, [0]) or np.array_equal(unique_elements, [1])
 
-# helper to create initial circular segmentation mask
+# helper to create initial circular segmentation mask given square image size
 def create_circular_mask(square_size, factor=1):
     # Create a grid of coordinates
     x, y = np.ogrid[:square_size, :square_size]
@@ -63,7 +64,69 @@ def create_circular_mask(square_size, factor=1):
     
     return binary_mask
 
-# Evalustion functions
+def create_circle_mask(square_size, center, radius):
+    """
+    Create a square binary mask with a circle of ones.
+
+    Parameters:
+    - square_size (int): Size of the square (square_size x square_size).
+    - center (tuple): Coordinates of the circle center (x, y).
+    - radius (float): Radius of the circle.
+
+    Returns:
+    - mask (numpy.ndarray): Binary mask as a 2D NumPy array.
+    """
+    # Create a grid of coordinates
+    x = np.arange(square_size)
+    y = np.arange(square_size)
+    xx, yy = np.meshgrid(x, y)
+
+    # Calculate the distance from the center for each point
+    distance_from_center = np.sqrt((xx - center[0])**2 + (yy - center[1])**2)
+
+    # Create the mask: 1 inside and on the circle, 0 outside
+    mask = (distance_from_center <= radius).astype(int)
+
+    return mask
+
+# Helper function for defining intial contour given center coordinates and radius
+def CreateInitCircContour(c_x, c_y, radius):
+    # Defining an initial circular contour around the object of interest
+    s = np.linspace(0, 2 * np.pi, 400) # Defining angles between 0 and 2*pi
+    r = c_x + radius * np.sin(s) # Defining x coordinates along the circle
+    c = c_y + radius * np.cos(s) # Defining y coordinates along the circle
+    init = np.array([r, c]).T # Each row represents a coordinate point (x,y)
+    #print ("Shape of original contour: ", init.shape) # (400,2)
+    return init
+
+# Helper function to plot the contour on the image
+def DisplayACMResult(img, init, snake):
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.imshow(img, cmap=plt.cm.gray) # grayscale image (not gaussian blurred image)
+    ax.plot(init[:, 1], init[:, 0], '--r', lw=3) # red dashed line for initial contour
+    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3) # blue line for fitted contour
+    ax.set_xticks([]), ax.set_yticks([])
+    ax.axis([0, img.shape[1], img.shape[0], 0])
+    plt.show()
+
+# Helper function to get center of an image and the largest possible radius
+def GetDefaultInitContourParams(img):
+    # Dimensions and parameters
+    rows, cols = img.shape[:2]
+    center_row, center_col = rows // 2, cols // 2
+    radius = min(rows, cols) // 2  # Example radius
+    return center_row, center_col, radius
+
+def AnalyzeCoordinates(image_path):
+    img = Image.open(image_path)
+
+    # Display the image
+    plt.imshow(img)
+    plt.title("Hover over the image to get coordinates")
+    coords = plt.ginput(1)  # Click to get one coordinate point
+    print(f"Coordinates: {coords}")
+
+# Evaluation functions
 
 def normalize_mask(mask):
     """
