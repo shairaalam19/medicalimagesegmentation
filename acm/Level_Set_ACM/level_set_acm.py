@@ -16,7 +16,6 @@
 # 3. number of iterations
 
 # imports
-import sys
 import tensorflow as tf
 from scipy.ndimage import distance_transform_edt
 import numpy as np
@@ -275,8 +274,10 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
             if((i+1)%freq == 0):
                 phi_img = tf.round(tf.cast((1 - tf.nn.sigmoid(phi_level)), dtype=tf.float32))
                 dice_score = lsah.dice_score(phi_img, gt)
-                img_title = 'Mask iter ' + str(int((i+1).numpy())) + ' - ' + 'Dice:{0:0.4f}'.format(dice_score)
+                iou_score = lsah.iou_score(phi_img, gt)
+                img_title = 'Mask ' + str(int((i+1).numpy())) + ' - ' + 'DICE:{0:0.3f}'.format(dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(iou_score)
                 print('intermediate dice score: ', dice_score)
+                print('intermediate iou score: ', iou_score)
                 lsah.displayImage(phi_img, img_title, True, acm_dir)
 
         return (i + 1, phi_level)
@@ -284,6 +285,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
     i = tf.constant(0, dtype=tf.int32) # Defining constant 0
     phi = init_phi # setting initial phi for the while loop
     _, phi = tf.while_loop(lambda i, phi: i < iter_limit, _body, loop_vars=[i, phi]) # loop over body with iter_num iterations to iteratively update phi
+    phi_dis_map = phi
     # Now phi is the final distance map after all the level set acm iterations
     # Sigmoid layer:
     phi = tf.round(tf.cast((1 - tf.nn.sigmoid(phi)), dtype=tf.float32))
@@ -292,7 +294,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
     # produce a binary mask. After applying sigmoid, casting, and rounding, the phi becomes a binary mask where each element is either 0 or 1.
 
     #return phi,init_phi, map_lambda1_acl, map_lambda2_acl # Later the code just ends up using the final phi returned.
-    return phi
+    return phi, phi_dis_map
 
 def my_func(mask):
     epsilon = 0

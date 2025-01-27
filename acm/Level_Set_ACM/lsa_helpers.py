@@ -1,12 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from scipy.ndimage import gaussian_filter
 from PIL import Image
+import tensorflow as tf
 
-# ---- Helper functions for working with level set acms
+# ---------------------------- Helper functions for working with level set acms -----------------------------------
 
-# Displaying image - to plot the segmentation of the contour
+# ---------- Visualization functions
+
+# Very useful to save PIL images, np array images, rgb images, grayscale images.
+# Very useful to save images, binary masks, probability masks, segmentations  
 def displayImage(img, title, grayscale=False, save_dir=None):
     if (grayscale):
         plt.imshow(img, cmap='gray')
@@ -22,7 +25,55 @@ def displayImage(img, title, grayscale=False, save_dir=None):
     plt.close()
     #plt.show()
 
+# Displaying initial contour (init) and fitted contour (snake) on the image
+# I used this during the snakes implementation
+def DisplayACMResultSnakes(img, init, snake):
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.imshow(img, cmap=plt.cm.gray) # grayscale image (not gaussian blurred image)
+    ax.plot(init[:, 1], init[:, 0], '--r', lw=3) # red dashed line for initial contour
+    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3) # blue line for fitted contour
+    ax.set_xticks([]), ax.set_yticks([])
+    ax.axis([0, img.shape[1], img.shape[0], 0])
+    plt.show()
+
+# Displaying initial contour and fitted contour given signed distance maps 
+def displayACMResult(image, init_phi, phi, acm_dir):
+    plt.figure(figsize=(8, 8))
+    plt.imshow(image, cmap='gray')  # Display the image
+
+    # Plot the initial contour (ϕ = 0 in init_phi)
+    plt.contour(init_phi, levels=[0], colors='red', linewidths=2)
+
+    # Plot the final contour (ϕ = 0 in phi)
+    plt.contour(phi, levels=[0], colors='blue', linewidths=2)
+
+    # Add labels and title
+    plt.title("ACM Contour Evolution: Red-initial, Blue-final")
+    plt.axis('off')
+
+    save_path = os.path.join(acm_dir, "ACM Contour Evolution.png")
+    plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+    plt.close()
+
+    # Show the plot
+    #plt.show()
+
+
+# ---------- Image properties
+
+# helper to check image has only 0s and 1s (integer or floating point)
+def is_binary_mask(arr):
+    unique_elements = np.unique(arr)
+    # Check if all unique elements are either 0 or 1 (integer or float)
+    return np.all(np.isin(unique_elements, [0, 1, 0.0, 1.0]))
+
+# helper function to check if image is a probability mask
+def is_probability_mask(arr):
+    return np.issubdtype(arr.dtype, np.floating) and np.all((arr >= 0) & (arr <= 1))
+
 # Cropping the image so that it is square
+# This function is potentially not needed anymore
+# If needed it could be a little buggy so double check.
 def crop_to_square(img):
     
     # Get the dimensions of the image
@@ -42,43 +93,44 @@ def crop_to_square(img):
     
     return img_cropped
 
-# helper to check image has only 0s and 1s
-def is_binary_mask(arr):
-    unique_elements = np.unique(arr)
-    return np.array_equal(unique_elements, [0, 1]) or np.array_equal(unique_elements, [0]) or np.array_equal(unique_elements, [1])
+# Brings up a view where you can hover around and see what pixel you  are on
+# May be helpful to choose a good center and readius for initial contour
+def AnalyzeCoordinates(image_path):
+    img = Image.open(image_path)
 
-# helper to create initial circular segmentation mask given square image size
-def create_circular_mask(square_size, factor=1):
-    # Create a grid of coordinates
-    x, y = np.ogrid[:square_size, :square_size]
-    
-    # Calculate the center and radius of the circle
-    center = square_size // 2
-    radius = (square_size*factor) // 2
-    
-    # Create the mask based on the distance from the center
-    mask = (x - center)**2 + (y - center)**2 <= radius**2
-    
-    # Convert the boolean mask to an integer mask (0s and 1s)
-    binary_mask = mask.astype(int)
-    
-    return binary_mask
+    # Display the image
+    plt.imshow(img)
+    plt.title("Hover over the image to get coordinates")
+    coords = plt.ginput(1)  # Click to get one coordinate point
+    print(f"Coordinates: {coords}")
 
-def create_circle_mask(square_size, center, radius):
+# ---------- Contour/Segmentation Initializations
+
+# Helper function to get center of an image and the largest possible radius [The minimum between height and width]
+def GetDefaultInitContourParams(shape):
+    # Dimensions and parameters
+    rows, cols = shape[:2]
+    center_row, center_col = rows // 2, cols // 2
+    radius = min(rows, cols) // 2  # Example radius
+    return center_row, center_col, radius
+
+# Helper function to create an initial segmentation in the form of a binary mask where initial detection is a circle
+def create_circular_mask(shape, center, radius):
     """
-    Create a square binary mask with a circle of ones.
+    Create a rectangular binary mask with a circle of ones.
 
     Parameters:
-    - square_size (int): Size of the square (square_size x square_size).
+    - shape (tuple): Shape of the rectangle (height, width).
     - center (tuple): Coordinates of the circle center (x, y).
     - radius (float): Radius of the circle.
 
     Returns:
     - mask (numpy.ndarray): Binary mask as a 2D NumPy array.
     """
+    height, width = shape  # Extract the dimensions of the rectangle
     # Create a grid of coordinates
-    x = np.arange(square_size)
-    y = np.arange(square_size)
+    x = np.arange(width)
+    y = np.arange(height)
     xx, yy = np.meshgrid(x, y)
 
     # Calculate the distance from the center for each point
@@ -90,6 +142,7 @@ def create_circle_mask(square_size, center, radius):
     return mask
 
 # Helper function for defining intial contour given center coordinates and radius
+# I used this in the snakes implementation
 def CreateInitCircContour(c_x, c_y, radius):
     # Defining an initial circular contour around the object of interest
     s = np.linspace(0, 2 * np.pi, 400) # Defining angles between 0 and 2*pi
@@ -99,34 +152,8 @@ def CreateInitCircContour(c_x, c_y, radius):
     #print ("Shape of original contour: ", init.shape) # (400,2)
     return init
 
-# Helper function to plot the contour on the image
-def DisplayACMResult(img, init, snake):
-    fig, ax = plt.subplots(figsize=(7, 7))
-    ax.imshow(img, cmap=plt.cm.gray) # grayscale image (not gaussian blurred image)
-    ax.plot(init[:, 1], init[:, 0], '--r', lw=3) # red dashed line for initial contour
-    ax.plot(snake[:, 1], snake[:, 0], '-b', lw=3) # blue line for fitted contour
-    ax.set_xticks([]), ax.set_yticks([])
-    ax.axis([0, img.shape[1], img.shape[0], 0])
-    plt.show()
 
-# Helper function to get center of an image and the largest possible radius
-def GetDefaultInitContourParams(img):
-    # Dimensions and parameters
-    rows, cols = img.shape[:2]
-    center_row, center_col = rows // 2, cols // 2
-    radius = min(rows, cols) // 2  # Example radius
-    return center_row, center_col, radius
-
-def AnalyzeCoordinates(image_path):
-    img = Image.open(image_path)
-
-    # Display the image
-    plt.imshow(img)
-    plt.title("Hover over the image to get coordinates")
-    coords = plt.ginput(1)  # Click to get one coordinate point
-    print(f"Coordinates: {coords}")
-
-# Evaluation functions
+# ---------- Evaluation functions
 
 def normalize_mask(mask):
     """
@@ -170,4 +197,3 @@ def dice_score(mask1, mask2):
     iou = iou_score(mask1, mask2)
     dice = 2 * iou / (1 + iou) if iou > 0 else 0.0
     return dice
-
