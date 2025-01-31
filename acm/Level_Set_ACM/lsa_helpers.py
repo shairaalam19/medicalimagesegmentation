@@ -127,14 +127,16 @@ def create_circular_mask(shape, center, radius):
     Returns:
     - mask (numpy.ndarray): Binary mask as a 2D NumPy array.
     """
+
     height, width = shape  # Extract the dimensions of the rectangle
     # Create a grid of coordinates
     x = np.arange(width)
     y = np.arange(height)
-    xx, yy = np.meshgrid(x, y)
+    xx, yy = np.meshgrid(x, y) # This is correct
 
     # Calculate the distance from the center for each point
-    distance_from_center = np.sqrt((xx - center[0])**2 + (yy - center[1])**2)
+    #distance_from_center = np.sqrt((xx - center[0])**2 + (yy - center[1])**2) #buggy version
+    distance_from_center = np.sqrt((yy - center[0])**2 + (xx - center[1])**2)
 
     # Create the mask: 1 inside and on the circle, 0 outside
     mask = (distance_from_center <= radius).astype(int)
