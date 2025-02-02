@@ -11,7 +11,7 @@ import lsa_helpers as lsah
 
 # Helper function that given an image, ground truth, image segmentation and acm properties, 
 #   runs the acm and generates and displays all results.
-def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
+def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
 
     if (acm_dir):
         if (not os.path.exists(acm_dir)):
@@ -40,7 +40,14 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save
 
     print('Shape of the image: ', img.shape)
     print('min and max intensity values of image: ', np.min(img), np.max(img))
-    
+
+    if(abc):
+        # apply additive bias correction
+        corrected_image, bias_field = lsah.apply_ABC(img)
+        if (acm_dir):
+            lsah.DisplayABCResult(img, bias_field, corrected_image, acm_dir)
+        img = corrected_image
+
     # Finalizing the ground truth
     if isinstance(ground_truth, str):
         if (not os.path.exists(ground_truth)):
@@ -102,10 +109,11 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save
     # Displays of everything before acm
     if (acm_dir):
         lsah.displayImage(img, "Image", True, save_dir=acm_dir)
+        #lsah.AnalyzeCoordinates(os.path.join(acm_dir, "Image.png"))
         lsah.displayImage(gt, "Ground Truth", True, save_dir=acm_dir)
         init_s_title = 'Initial Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(init_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(init_iou_score)
         lsah.displayImage(init_s, init_s_title, True, save_dir=acm_dir)
-    
+        
     # ------- Note: AT THIS POINT IMAGE, GROUND TRUTH, AND INITIAL SEGMENTATION SHOULD BE IN A STATE FOR ACM PROCESSING
 
     # --- From initial segmentation get lambdas and initial phi (they would also have the same shape)
@@ -165,3 +173,8 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save
     result['final iou score'] = iou_score
 
     return result
+
+
+
+#def run_cv(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
+    # running the chan vese algorithm which is a region based level set acm.

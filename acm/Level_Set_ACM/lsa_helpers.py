@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from PIL import Image
-import tensorflow as tf
+from scipy.ndimage import gaussian_filter
 
 # ---------------------------- Helper functions for working with level set acms -----------------------------------
 
@@ -103,6 +103,53 @@ def AnalyzeCoordinates(image_path):
     plt.title("Hover over the image to get coordinates")
     coords = plt.ginput(1)  # Click to get one coordinate point
     print(f"Coordinates: {coords}")
+
+# Applying additive bias correction to grayscale image - attempt to improve intial contour robustness.
+def apply_ABC(image, sigma=50):
+    """
+    Apply Additive Bias Correction (ABC) to remove intensity non-uniformity.
+
+    Parameters:
+    - image: Grayscale image (NumPy array)
+    - sigma: Standard deviation for Gaussian filter (controls smoothing level)
+
+    Returns:
+    - corrected_image: Bias-corrected image
+    - bias_field: Estimated bias field
+    """
+
+    # Convert to float for computation
+    image = image.astype(np.float32)
+
+    # Estimate the bias field using a Gaussian filter
+    bias_field = gaussian_filter(image, sigma=sigma)
+
+    # Avoid division by zero
+    bias_field[bias_field == 0] = 1
+
+    # Correct the image by dividing by the bias field
+    corrected_image = image / bias_field
+
+    # Normalize to [0, 255] for visualization
+    corrected_image = (corrected_image - corrected_image.min()) / (corrected_image.max() - corrected_image.min()) * 255
+    corrected_image = corrected_image.astype(np.uint8)
+
+    return corrected_image, bias_field
+
+def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 3, 1), plt.imshow(image, cmap='gray'), plt.title("Original Image")
+    plt.subplot(1, 3, 2), plt.imshow(bias_field, cmap='jet'), plt.title("Estimated Bias Field")
+    plt.subplot(1, 3, 3), plt.imshow(corrected_image, cmap='gray'), plt.title("Corrected Image")
+
+    if save_dir:
+        title = "ABC Result"
+        save_path = os.path.join(save_dir, f"{title}.png")
+        plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+    else:
+        plt.show()
+    
+    plt.close()
 
 # ---------- Contour/Segmentation Initializations
 
