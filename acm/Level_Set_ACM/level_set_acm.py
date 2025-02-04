@@ -19,7 +19,7 @@
 import tensorflow as tf
 from scipy.ndimage import distance_transform_edt
 import numpy as np
-print("TensorFlow version:", tf.__version__) # 2.18.0
+#print("TensorFlow version:", tf.__version__) # 2.18.0
 
 import lsa_helpers as lsah
 

@@ -4,7 +4,9 @@ import sys
 from PIL import Image
 from scipy.ndimage import gaussian_filter
 import level_set_acm as lsa
+import chan_vese as CV
 import lsa_helpers as lsah
+import tensorflow as tf
 
 # Defines helper functions that take care of entire level set acm pipeline:
 #   image/gt/init seg processing, constructing inputs to lsa, running lsa, logs, results, saving outputs
@@ -174,7 +176,165 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
 
     return result
 
-
-
-#def run_cv(image, ground_truth, init_seg=None, acm_dir=None, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
+def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim=300, save_freq=50, nu = 100, mu = 1):
     # running the chan vese algorithm which is a region based level set acm.
+    if (acm_dir):
+        if (not os.path.exists(acm_dir)):
+            print("The acm directory %s is not valid" % acm_dir)
+            sys.exit()
+
+    # Finalizing the image
+    if isinstance(image, str):
+        if (not os.path.exists(image)):
+            print("The image path %s is not valid" % image)
+            sys.exit()
+        if(image.endswith('.npy')):
+            img = np.load(image)
+        else:
+            # It's a path to an image file
+            pil_img = Image.open(image)
+            if (acm_dir):
+                lsah.displayImage(pil_img, "Color Image", save_dir=acm_dir)
+            img = np.array(pil_img.convert('L')) # converting to grayscale and an array.
+            # potentially gaussian filtering can be applied here if needed.
+    elif (isinstance(image, np.ndarray)):
+        img = image
+    else:
+        print("Image type currently not supported")
+        sys.exit()
+
+    print('Shape of the image: ', img.shape)
+    print('min and max intensity values of image: ', np.min(img), np.max(img))
+
+    if(abc):
+        # apply additive bias correction
+        corrected_image, bias_field = lsah.apply_ABC(img)
+        if (acm_dir):
+            lsah.DisplayABCResult(img, bias_field, corrected_image, acm_dir)
+        img = corrected_image
+
+    # Now, once the image is finalized, convert it to floating point for better cv calculations
+    img = img.astype(np.float64)
+
+    # Finalizing the ground truth
+    if isinstance(ground_truth, str):
+        if (not os.path.exists(ground_truth)):
+            print("The ground truth path %s is not valid" % ground_truth)
+            sys.exit()
+        if(ground_truth.endswith('.npy')):
+            gt = lsah.normalize_mask(np.load(ground_truth))
+        else:
+            # It's a path to a ground truth file
+            pil_gt = Image.open(ground_truth)
+            gt = lsah.normalize_mask(np.array(pil_gt))
+    elif (isinstance(ground_truth, np.ndarray)):
+        gt = ground_truth
+    else:
+        print("Ground truth type currently not supported")
+        sys.exit()
+
+    print('Shape of the ground truth: ', gt.shape)
+    print('binary mask check for ground truth: ', lsah.is_binary_mask(gt))
+
+    # Finalizing the initial level set function - like a signed distance map
+    if(init_lsf is None):
+        # Default initial contour: square centered in the middle
+        center_row, center_col, radius_max = lsah.GetDefaultInitContourParams(img.shape)
+        init_lsf = np.ones((img.shape[0],img.shape[1]),img.dtype)
+        row_min = center_row - (radius_max//4)
+        row_max = center_row + (radius_max//4)
+        col_min = center_col - (radius_max//4)
+        col_max = center_col + (radius_max//4)
+        init_lsf[row_min:row_max,col_min:col_max]= -1
+        #init_lsf=-init_lsf
+
+    # This parameter can only be an np array
+    if(not isinstance(init_lsf, np.ndarray)):
+        print("Initial level set type currently not supported")
+        sys.exit()
+
+    # bug converting initial lsf to initial segmentation
+    # Constructing initial segmentation using the level set function
+    init_seg = tf.cast((1 - tf.nn.sigmoid(init_lsf)), dtype=tf.float32)
+    init_mask = tf.round(init_seg)
+    
+    print('Shape of the initial segmentation: ', init_seg.shape)
+    print('Probability mask check for initial segmentation: ', lsah.is_probability_mask(init_seg)) # probabilities between 0 and 1
+    print('Binary mask check for initial segmentation: ', lsah.is_binary_mask(init_seg)) # probabilities between 0 and 1
+
+    print('Shape of the initial mask: ', init_mask.shape)
+    print('Binary mask check for initial mask: ', lsah.is_binary_mask(init_mask))
+
+     # --- Priniting initial evaluation scores
+    init_dice_score = lsah.dice_score(init_mask, gt)
+    init_iou_score = lsah.iou_score(init_mask, gt)
+    print('Initial Dice score: ', init_dice_score)
+    print('Initial IOU: ', init_iou_score)
+
+    # Displays of everything before acm
+    if (acm_dir):
+        # Image
+        lsah.displayImage(img, "Image", True, save_dir=acm_dir)
+        #lsah.AnalyzeCoordinates(os.path.join(acm_dir, "Image.png"))
+        # Ground truth
+        lsah.displayImage(gt, "Ground Truth", True, save_dir=acm_dir)
+        # Initial segmentation
+        init_s_title = 'Initial Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(init_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(init_iou_score)
+        lsah.displayImage(init_seg, init_s_title, True, save_dir=acm_dir)
+        # Initial contour
+        lsah.displayLSF(img, init_lsf, acm_dir, "_initial")
+    
+    # Chan Vese ACM processing
+
+    # defining constants
+    # mu, nu, and num_iter come from input/default
+    eps = 1 
+    step = 0.1 # wieght of update to LSF
+    LSF=init_lsf
+
+    for i in range(iter_lim):
+        LSF = CV.CV(LSF, img, mu, nu, eps, step)
+        if i % save_freq == 0:
+
+            # Calculate the intermediate dice and iou values
+            intm_seg_mask = tf.round(tf.cast((1 - tf.nn.sigmoid(LSF)), dtype=tf.float32))
+            intm_dice_score = lsah.dice_score(intm_seg_mask, gt)
+            intm_iou_score = lsah.iou_score(intm_seg_mask, gt)
+            print(f'Dice score at iteration {i}: {intm_dice_score}')
+            print(f'IOU score at iteration {i}: {intm_iou_score}')
+
+            if(acm_dir):
+                # Display contour
+                lsah.displayLSF(img, LSF, acm_dir, f'_iteration_{i}')
+                # Display segmentation
+                intm_seg_title = 'Mask ' + str(i) + ' - ' + 'DICE:{0:0.3f}'.format(intm_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(intm_iou_score)
+                lsah.displayImage(intm_seg_mask, intm_seg_title, True, save_dir=acm_dir)
+            
+    # final evaluations scores
+    final_seg_mask = tf.round(tf.cast((1 - tf.nn.sigmoid(LSF)), dtype=tf.float32))
+    final_dice_score = lsah.dice_score(final_seg_mask, gt)
+    final_iou_score = lsah.iou_score(final_seg_mask, gt)
+    print(f'Final Dice score: {final_dice_score}')
+    print(f'Final IOU score: {final_iou_score}')
+    
+    if(acm_dir):
+        # final segmentation
+        final_s_title = 'Final Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(final_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(final_iou_score)
+        lsah.displayImage(final_seg_mask, final_s_title, True, acm_dir)
+        # acm evolution
+        lsah.displayACMResult(img, init_lsf, LSF, acm_dir)
+    
+    # Fill result dictionary with important info and return
+    result = {}
+    result['image'] = img
+    result['gt'] = gt
+    result['initial LSF'] = init_lsf
+    result['init_seg'] = init_seg
+    result['final LSF'] = LSF
+    result['final_seg_mask'] = final_seg_mask
+    result['initial dice score'] = init_dice_score
+    result['final dice score'] = final_dice_score
+    result['initial iou score'] = init_iou_score
+    result['final iou score'] = final_iou_score
+
+    return result

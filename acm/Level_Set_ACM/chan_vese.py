@@ -1,54 +1,12 @@
-import sys
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import math
 #from pylab import*
-import os
 
 # code source: https://www.kaggle.com/code/naim99/active-contour-model-python
 
 # This code implements the Chan-Vese active contour model for image segmentation. 
 # It evolves the initial level set contour to segment an object based on region-based intensity differences.
-
-cwd = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(cwd, 'Level_Set_ACM')))
-
-import lsa_helpers as lsah
-
-# Reading and Preprocessing the Image
-#Image = cv2.imread('../dataset/medical/cccc.jpg',1)  # color mode 1: BGR mode
-#Image = cv2.imread('dataset/animals/cat.jpg',1)
-#Image = cv2.imread('../dataset/animals/dog.jpeg',1)
-Image = cv2.imread('../dataset/chase_db1/Image_01L.jpg')
-image = cv2.cvtColor(Image,cv2.COLOR_BGR2GRAY) # converts image from BGR color space to grayscale
-img=np.array(image,dtype=np.float64) # Converts the grayscale image into a NumPy array with float64 data type for precise calculations
-# correcting image using ABC
-corr_img, bias = lsah.apply_ABC(img)
-lsah.DisplayABCResult(img, bias, corr_img, save_dir=None)
-#img=corr_img
-
-# Initializing the level set function
-
-# Create an initial level set function (LSF) as a matrix filled with 1.
-IniLSF = np.ones((img.shape[0],img.shape[1]),img.dtype)
-# Set a square region of the LSF (rows 30 to 80 and columns 30 to 80) to -1.
-# TODO: make this step less hard-coded
-IniLSF[30:80,30:80]= -1 
-# Invert the LSF values (1 becomes -1 and vice versa).
-IniLSF=-IniLSF
-
-# Preparing the Image for Display
-
-# Convert the BGR image to RGB format for proper display in matplotlib.
-Image = cv2.cvtColor(Image,cv2.COLOR_BGR2RGB)
-# Display the RGB image without axis ticks
-plt.figure(1),plt.imshow(Image),plt.xticks([]), plt.yticks([])   # to hide tick values on X and Y axis
-# Overlay the contour of the initial LSF (zero level) on the image in blue with a line width of 2.
-plt.contour(IniLSF,[0],color = 'b',linewidth=2)
-# Render and display the plot without blocking further execution.
-#plt.draw(),plt.show(block=False)
-plt.draw(),plt.show()
 
 # A function to apply a mathematical operation element-wise on a matrix (input) based on the string (str).
 # Computes either the arctangent or square root of each pixel value.
@@ -130,26 +88,3 @@ def CV (LSF, img, mu, nu, eps, step):
     # Updating the LSF
     LSF = LSF + step*(Length + Penalty + CVterm)
     return LSF
-
-
-# Running the Algorithm
-
-# Sets parameters for the Chan-Vese algorithm and initializes the LSF
-mu = 1 # weight of the penalty term
-nu = 0.003 * 255 * 255 # weight of the length term in CV energy function
-eps = 1 
-step = 0.1 # wieght of update to LSF
-LSF=IniLSF
-
-# Iteratively updates the LSF using the Chan-Vese algorithm.
-num = 20 # TODO: update number of energy minimization iterations as needed
-for i in range(1,num):
-    LSF = CV(LSF, img, mu, nu, eps,step) 
-    if i % 10 == 0: # TODO: update frequency of display as needed
-        # overlays the updated contour of LSF (red) on the original image
-        #plt.imshow(Image),plt.xticks([]), plt.yticks([]) 
-        plt.imshow(img),plt.xticks([]), plt.yticks([]) 
-        plt.contour(LSF,[0],colors='r',linewidth=2) 
-        plt.draw(), plt.show()
-        #plt.show(block=False)
-        #plt.pause(0.01)

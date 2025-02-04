@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from PIL import Image
 from scipy.ndimage import gaussian_filter
+import tensorflow as tf
 
 # ---------------------------- Helper functions for working with level set acms -----------------------------------
 
@@ -58,17 +59,30 @@ def displayACMResult(image, init_phi, phi, acm_dir):
     # Show the plot
     #plt.show()
 
+# Displaying a level set function
+def displayLSF(image, lsf, acm_dir, suffix):
+    plt.imshow(image, cmap='gray'),plt.xticks([]), plt.yticks([])
+    plt.contour(lsf,[0],colors='r',linewidth=2)
+    plt.draw()
+    
+    file_name =  "Contour" + suffix + ".png"
+    save_path = os.path.join(acm_dir, file_name)
+    plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+    plt.close()
 
 # ---------- Image properties
 
 # helper to check image has only 0s and 1s (integer or floating point)
 def is_binary_mask(arr):
     unique_elements = np.unique(arr)
+    #print(unique_elements)
     # Check if all unique elements are either 0 or 1 (integer or float)
     return np.all(np.isin(unique_elements, [0, 1, 0.0, 1.0]))
 
 # helper function to check if image is a probability mask
 def is_probability_mask(arr):
+    if isinstance(arr, tf.Tensor):
+        return arr.dtype.is_floating and tf.reduce_all((arr >= 0) & (arr <= 1))
     return np.issubdtype(arr.dtype, np.floating) and np.all((arr >= 0) & (arr <= 1))
 
 # Cropping the image so that it is square
