@@ -90,6 +90,7 @@ def train_model(model, train_loader, criterion, optimizer):
         save_model(model, model_name, model_folder)
     else: 
         print("No valid epoch found. Model not saved.")
+        return None, None
 
     save_loss_graph(epoch_losses, model_folder, title="Training Loss per Batch", file_name="training_loss.png")
 

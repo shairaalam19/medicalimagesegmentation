@@ -23,6 +23,7 @@ def main():
     config = load_config()
 
     if config["DEMO"]: 
+        print(f"{('-' * ((30 - len('DEMO') - 2) // 2))} DEMO {('-' * ((30 - len('DEMO') - 2) // 2))}")
         # Preprocess 
         data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["DEMO_DATASET_SIZE"]) # Creates a dataset class that contains the preprocessed dataset
         demo_model(data)
@@ -31,13 +32,16 @@ def main():
 
     # Load dataset 
     if config["TRAIN"] or config["TEST"]: 
+        print(f"{('-' * ((30 - len('LOAD DATASET') - 2) // 2))} LOAD DATASET {('-' * ((30 - len('LOAD DATASET') - 2) // 2))}")
         data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["MODEL_DATASET_SIZE"])
     
     # Split dataset for training and testing 
     if config["TRAIN"] and config["TEST"]: 
+        print(f"{('-' * ((30 - len('SPLIT DATASET') - 2) // 2))} SPLIT DATASET {('-' * ((30 - len('SPLIT DATASET') - 2) // 2))}")
         train_dataset, test_dataset = split_dataset(data) # splits the dataset 
 
     if config["TRAIN"]: 
+        print(f"{('-' * ((30 - len('TRAIN') - 2) // 2))} TRAIN {('-' * ((30 - len('TRAIN') - 2) // 2))}")
         if train_dataset is None: 
             train_dataset = data
         train_data = DataLoader(train_dataset, batch_size=config["TRAINING_BATCH_SIZE"], shuffle=True) 
@@ -72,15 +76,19 @@ def main():
         model_folder, model_name = train_model(model, train_data, criterion, optimizer)
         
     if config["TEST"]: 
+        print(f"{('-' * ((30 - len('TEST') - 2) // 2))} TEST {('-' * ((30 - len('TEST') - 2) // 2))}")
         if test_dataset is None: 
             test_dataset = data
         test_data = DataLoader(test_dataset, batch_size=config["TEST_BATCH_SIZE"])
 
         # Load Model
-        if model is None:
+        if model is None and not config["TRAIN"]:
             model_folder = config["LOAD_MODEL_FOLDER"]
             model_name = config["MODEL_NAME"]
             model = load_model(model_folder, model_name)
+
+        elif model is None and config["TRAIN"]:
+            print("No model is available to test. ")
 
         criterion = EdgeSegmentationLoss()
 
