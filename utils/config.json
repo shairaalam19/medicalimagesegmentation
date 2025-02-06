@@ -2,7 +2,7 @@
     "DEMO": false,
     "PRETRAINING": false,
     "TRAIN": true,
-    "TEST": true,
+    "TEST": false,
     "ACM": false,
     
     "DEMO_DATASET_SIZE": 4,
