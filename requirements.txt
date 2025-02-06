@@ -1,0 +1,10 @@
+numpy 
+scikit-image
+matplotlib
+scikit-learn
+torch
+torchvision
+opencv-python
+opencv-python-headless 
+opencv-contrib-python
+pillow
