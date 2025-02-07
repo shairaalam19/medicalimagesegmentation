@@ -10,8 +10,8 @@
     "TRAINING_BATCH_SIZE": 4,
     "TEST_BATCH_SIZE": 1,
     "TEST_SPLIT_RATIO": 0.1,
-    "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/2/frames",
-    "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/2/masks",
+    "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/frames",
+    "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/masks",
 
     "EPOCHS": 200,
     "LEARNING_RATE": 0.0001,
