@@ -15,7 +15,8 @@ Integrating Active Contour Models with Attention Mechanisms in Deep Learning for
 
 * Repository: https://github.com/MedicineToken/one-prompt 
 * Dataset: https://drive.google.com/file/d/1iXFm9M1ocrWNkEIthWUWnZYY2-1l-qya/view 
-    * Skin Lesion (ISIC): https://challenge.isic-archive.com/data/#2020
+    * COVID-19 CT-Scans: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset 
+* ISIC: https://challenge.isic-archive.com/data/#2016
 
 ## Examples
 ### Active Contour Models 

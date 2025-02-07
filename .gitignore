@@ -1,3 +1,3 @@
 .DS_Store
-data/*
+data/covid19-ct-scan-lesion-segmentation-dataset
 outputs/results/models/*
