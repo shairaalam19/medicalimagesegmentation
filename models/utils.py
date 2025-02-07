@@ -36,7 +36,9 @@ def train_model(model, train_loader, criterion, optimizer):
     model.train() # enables features liek dropout or batch noramlization 
 
     # Apply Learning Rate Scheduler (Reduce LR on Plateau)
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, threshold=1e-4, verbose=True) # lowers learning rate when loss stops improving
+    # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, threshold=1e-4, verbose=True) # lowers learning rate when loss stops improving
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5) # reduces learning rate every few epochs 
+    # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.9)  # Reduce LR by 10% every epoch
 
     # Apply Gradient Clipping to Prevent Exploding Gradients
     clip_value = 1.0 
@@ -70,11 +72,13 @@ def train_model(model, train_loader, criterion, optimizer):
         print(f"Epoch {epoch + 1}/{config['EPOCHS']}, Loss: {epoch_loss:.4f}")
 
         # Adjust learning rate based on loss
-        scheduler.step(epoch_loss)
+        scheduler.step(epoch_loss) # based on what the epoch loss is (rate of change)
+        scheduler.step() # just constant scheduling 
 
-        if epoch_loss < 0: 
-            print(f"Epoch Loss is less than zero ({epoch_loss:.4f}). Ending training. ")
-            break
+        # If epoch loss is negative
+        # if epoch_loss < 0: 
+        #     print(f"Epoch Loss is less than zero ({epoch_loss:.4f}). Ending training. ")
+        #     break
 
         last_epoch = epoch
         epoch_losses.append(epoch_loss)  # Store the loss for plotting
