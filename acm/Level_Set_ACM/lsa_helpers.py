@@ -75,7 +75,7 @@ def displayLSF(image, lsf, acm_dir, suffix):
 # helper to check image has only 0s and 1s (integer or floating point)
 def is_binary_mask(arr):
     unique_elements = np.unique(arr)
-    #print(unique_elements)
+    #print('Unique elements during binary mask check: ', unique_elements)
     # Check if all unique elements are either 0 or 1 (integer or float)
     return np.all(np.isin(unique_elements, [0, 1, 0.0, 1.0]))
 

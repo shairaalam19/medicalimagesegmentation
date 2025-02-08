@@ -75,7 +75,9 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
         # default: create an initial circular mask from the center
         center_row, center_col, radius_max = lsah.GetDefaultInitContourParams(img.shape)
         print('Initial contour parameters: ', center_row, center_col, radius_max)
-        init_seg = lsah.create_circular_mask(img.shape, (center_row, center_col), radius_max // 2) # need to debug
+        init_seg = lsah.create_circular_mask(img.shape, (center_row, center_col), radius_max // 2)
+        #init_seg = 0.25 + 0.5 * init_seg - for testing if 0.25/0.75 initial split is better than 0/1
+        # The above was used for 'Results/DALS_LSA/Skin/new_pm' result
 
     if (isinstance(init_seg, str)):
         if (not os.path.exists(init_seg)):
@@ -259,8 +261,8 @@ def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim
     init_mask = tf.round(init_seg)
     
     print('Shape of the initial segmentation: ', init_seg.shape)
-    print('Probability mask check for initial segmentation: ', lsah.is_probability_mask(init_seg)) # probabilities between 0 and 1
-    print('Binary mask check for initial segmentation: ', lsah.is_binary_mask(init_seg)) # probabilities between 0 and 1
+    print('Probability mask check for initial segmentation: ', lsah.is_probability_mask(init_seg)) # probabilities between 0 and 1 (0.25, 0.75)
+    print('Binary mask check for initial segmentation: ', lsah.is_binary_mask(init_seg)) # probabilities between 0 and 1 (0.25, 0.75)
 
     print('Shape of the initial mask: ', init_mask.shape)
     print('Binary mask check for initial mask: ', lsah.is_binary_mask(init_mask))
