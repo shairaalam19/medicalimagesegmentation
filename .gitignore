@@ -1,3 +1,4 @@
 .DS_Store
 data/covid19-ct-scan-lesion-segmentation-dataset
 outputs/results/models/*
+**/__pycache__/
