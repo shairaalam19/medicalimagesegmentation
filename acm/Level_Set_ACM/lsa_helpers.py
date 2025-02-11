@@ -1,7 +1,9 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from PIL import Image
+import cv2
+from skimage.filters import gaussian
 from scipy.ndimage import gaussian_filter
 import tensorflow as tf
 
@@ -164,6 +166,34 @@ def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
         plt.show()
     
     plt.close()
+
+def apply_blur_plus_clahe(image, sigma=1.0, clipLimit=2.0):
+    """
+    Applies Gaussian blurring followed by contrast limited adaptive histogram equalization (CLAHE) to a grayscale image.
+    
+    Parameters:
+        image (np.ndarray): Input grayscale image.
+    
+    Returns:
+        np.ndarray: Processed image.
+    """
+
+    # Note on potential other sigma values:
+    
+    # Note on potential other clipLimit values:
+
+
+    # Apply Gaussian blur
+    blurred = gaussian(image, sigma=sigma)
+    
+    # Convert to uint8 (skimage's gaussian returns float image)
+    blurred = (blurred * 255).astype(np.uint8)
+    
+    # Apply CLAHE
+    clahe = cv2.createCLAHE(clipLimit=clipLimit, tileGridSize=(8, 8))
+    enhanced = clahe.apply(blurred)
+    
+    return enhanced
 
 # ---------- Contour/Segmentation Initializations
 
