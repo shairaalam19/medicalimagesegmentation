@@ -6,7 +6,6 @@ import sys
 
 from models.AttentionBlock import Attention, EdgeAttention
 from models.EdgeSegmentation import get_edges
-from models.ActiveContourBlock import ActiveContourLayer
 
 class EdgeSegmentationCNN(nn.Module):
     def __init__(self, edge_attention=False, define_edges_before=False, define_edges_after=False, use_acm=False):
@@ -21,7 +20,6 @@ class EdgeSegmentationCNN(nn.Module):
         self.define_edges_before = define_edges_before
         self.define_edges_after = define_edges_after
         self.use_acm = use_acm
-        self.acm = ActiveContourLayer()
 
         # Encoder: downsamples to extract features and reduces the spatial dimensions 
         self.encoder = nn.Sequential(
@@ -49,12 +47,12 @@ class EdgeSegmentationCNN(nn.Module):
         )
 
         # Output of bottleneck will be like (H_reduced, W_reduced, 64)
-        self.acm_hyperparameter_generator = nn.Sequential(
+        self.acm = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),  # Global spatial pooling to reduce to 1x1x64
             nn.Flatten(),  # Flatten the 1x1x64 tensor to 64
             nn.Linear(64, 32),  # Reduce to 32 neurons
             nn.ReLU(),
-            nn.Linear(32, 3)  # Output 3 values corresponding to ACM hyperparameters - num_iter, nu, mu
+            nn.Linear(32, 3)  # Output 3 values corresponding to ACM hyperparameters
         )
 
         # Decoder: upsamples features to reconstruct an edge-detected image 
@@ -64,7 +62,7 @@ class EdgeSegmentationCNN(nn.Module):
             nn.ReLU(), # Introduces non-linearity to help learn complex patterns 
             self.attention(32, 32),  # Add attention block in the decoder
             nn.ConvTranspose2d(32, 1, kernel_size=2, stride=2),
-            nn.Sigmoid() # generates probabilities between 0 and 1
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -82,32 +80,7 @@ class EdgeSegmentationCNN(nn.Module):
         bottleneck_output = self.bottleneck(encoded)
 
         if(self.use_acm):
-            acm_hyperparameters = self.acm_hyperparameter_generator(bottleneck_output)
-            # Need to ensure that the first hyperparameter [num_iter] is an integer
-            # acm_hyperparameters[:, 0] = torch.round(acm_hyperparameters[:, 0])
-            # # Enforcing a range to focus on for num_iter
-            # acm_hyperparameters[:, 0] = torch.clamp(acm_hyperparameters[:, 0], min=1, max=3000)
-            # # Enforcing a range to focus on for nu, mu
-            # acm_hyperparameters[:, 1:] = torch.clamp(acm_hyperparameters[:, 1:], min=0, max=100)
-
-            # Ensure that the first hyperparameter [num_iter] is an integer
-            acm_hyperparameters = torch.cat((
-                torch.round(acm_hyperparameters[:, 0]).unsqueeze(1),  # Round and keep the first column
-                acm_hyperparameters[:, 1:]  # Keep the rest of the columns unchanged
-            ), dim=1)
-
-            # Enforcing a range to focus on for num_iter
-            acm_hyperparameters = torch.cat((
-                torch.clamp(acm_hyperparameters[:, 0], min=1, max=3000).unsqueeze(1),  # Clamp the first column
-                acm_hyperparameters[:, 1:]  # Keep the rest unchanged
-            ), dim=1)
-
-            # Enforcing a range to focus on for nu, mu
-            acm_hyperparameters = torch.cat((
-                acm_hyperparameters[:, 0].unsqueeze(1),  # Keep the first column unchanged
-                torch.clamp(acm_hyperparameters[:, 1:], min=0, max=100)  # Clamp the rest of the columns
-            ), dim=1)
-
+            acm_hyperparameters = self.acm(bottleneck_output)
 
         decoded = self.decoder(bottleneck_output)
 
@@ -116,26 +89,24 @@ class EdgeSegmentationCNN(nn.Module):
             decoded = get_edges(decoded)
 
         
-        # print("Understanding forward function results: ")
+        print("Understanding forward function results: ")
 
-        # print("Intensity Image", type(intensity_image), intensity_image.dtype, intensity_image.shape, intensity_image.min(), intensity_image.max())
-        # # Intensity Image <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024]) tensor(0.) tensor(1.)
+        print("Intensity Image", type(intensity_image), intensity_image.dtype, intensity_image.shape, intensity_image.min(), intensity_image.max())
+        # Intensity Image <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024])
 
-        # print("ACM Hyperparameters", type(acm_hyperparameters), acm_hyperparameters.dtype, acm_hyperparameters.shape, acm_hyperparameters.min(), acm_hyperparameters.max())
-        # # ACM Hyperparameters <class 'torch.Tensor'> torch.float32 torch.Size([4, 3]) tensor(0.0699, grad_fn=<MinBackward1>) tensor(0.1567, grad_fn=<MaxBackward1>)
+        print("ACM Hyperparameters", type(acm_hyperparameters), acm_hyperparameters.dtype, acm_hyperparameters.shape, acm_hyperparameters.min(), acm_hyperparameters.max())
+        # ACM Hyperparameters <class 'torch.Tensor'> torch.float32 torch.Size([4, 3])
 
-        # print("Probability Mask", type(decoded), decoded.dtype, decoded.shape, decoded.min(), decoded.max())
-        # # Probability Mask <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024]) tensor(0.4191, grad_fn=<MinBackward1>) tensor(0.4278, grad_fn=<MaxBackward1>)
+        print("Probability Mask", type(decoded), decoded.dtype, decoded.shape, decoded.min(), decoded.max())
+        # Probability Mask <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024])
 
         if(not self.use_acm):
             output = decoded
         else:
-            # send decoded throuh acm and then the output will be the final probability mask
-            # TODO: call acm to get the output
-            output = self.acm(intensity_image, decoded, acm_hyperparameters)
-            print("ACM Result", type(output), output.dtype, output.shape, output.min(), output.max())
+            # send acm and then the output will be the final probability mask / output
+            output=None
 
-        print(output.requires_grad)  # Should be True if gradients are tracked
-        #sys.exit()
 
+        sys.exit()
+        
         return output

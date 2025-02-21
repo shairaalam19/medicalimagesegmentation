@@ -3,7 +3,7 @@
     "PRETRAINING": false,
     "TRAIN": true,
     "TEST": true,
-    "ACM": true,
+    "ACM": false,
     
     "DEMO_DATASET_SIZE": 0,
     "MODEL_DATASET_SIZE": 10,

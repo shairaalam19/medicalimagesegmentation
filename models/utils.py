@@ -6,7 +6,6 @@ import shutil
 from torch.utils.data import DataLoader, random_split
 from torch import nn, optim
 import torch.optim.lr_scheduler as lr_scheduler
-import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +30,7 @@ def train_model(model, train_loader, criterion, optimizer):
     # Save model file 
     save_file("models/EdgeSegmentationCNN.py", model_folder)
     save_file("utils/config.json", model_folder)
-
+    torch.autograd.set_detect_anomaly(True)
     # Start training 
     model.train() # enables features liek dropout or batch noramlization 
 
