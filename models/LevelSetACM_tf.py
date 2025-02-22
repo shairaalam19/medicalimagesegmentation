@@ -1,36 +1,21 @@
 # This is the final ACM reference we will use throughout the project.
 # Level Set ACM as implemented in DALS.
 
-# Hyperparameters: 
-# 1. initial contour (location/shape/size).
-# 2. nu - balloon force - (I think controls the length of the contour)
-# 3. mu - regularization parameter that balances the trade-off between closely fitting the data and maintaining a smooth contour. Higher mu - more smoothing
-# 4. number of iterations
-# 5. narrow band width 
-# 6. filter patch size (In fast lookup)
-# 7. Size of square representing small region (non-fast-lookup version)
-
-# Important hyperparameters to tune for now:
-# 1. nu (controls length)
-# 2. mu (controls smoothness)
+# Important hyperparameters:
+# 1. nu (controls length) - balloon force - (I think controls the length of the contour)
+# 2. mu (controls smoothness) - regularization parameter that balances the trade-off between closely fitting the data and maintaining a smooth contour. Higher mu - more smoothing
 # 3. number of iterations
+# 4. initial contour (location/shape/size)
 
 # imports
 import tensorflow as tf
 from scipy.ndimage import distance_transform_edt
 import numpy as np
-import torch
-import torch.nn.functional as F
-import sys
 #print("TensorFlow version:", tf.__version__) # 2.18.0
 
 narrow_band_width = 1
-fast_lookup = True
 f_size = 15
 
-# The function re_init_phi aims to reinitialize the level-set function phi 
-# to maintain its signed distance property, which is crucial for the stability 
-# and accuracy of level-set methods in image segmentation.
 def re_init_phi(phi, dt, input_image_size_x, input_image_size_y):
 
     D_left_shift = tf.cast(tf.roll(phi, -1, axis=1), dtype='float32')
@@ -111,15 +96,12 @@ def get_curvature(phi, x, y):
     return curvature, mean_grad
 
 def get_intensity(image, masked_phi, filter_patch_size=5):
-    #u_1 = tf.layers.average_pooling2d(tf.multiply(image, masked_phi), [filter_patch_size, filter_patch_size], 1,padding='SAME')
-    #u_2 = tf.layers.average_pooling2d(masked_phi, [filter_patch_size, filter_patch_size], 1, padding='SAME')
     u_1 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(tf.multiply(image, masked_phi))
     u_2 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(masked_phi)
     u_2_prime = 1 - tf.cast((u_2 > 0), dtype='float32') + tf.cast((u_2 < 0), dtype='float32')
     u_2 = u_2 + u_2_prime + 2.220446049250313e-16
 
     return tf.divide(u_1, u_2)
-
 
 # implements a level set-based active contour method
 # elems: input dictionary containing all inputs to the level-set acm
@@ -130,8 +112,6 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
     init_phi = elems[1] # The initial distance map, which defines the starting contour - 2D
     map_lambda1_acl = elems[2] # Weight map influencing the region-based energy terms - inside contour - 2D
     map_lambda2_acl = elems[3] # Weight map influencing the region-based energy terms - outside contour - 2D
-    wind_coef = 3 # Determines the size of the local window around each point for intensity computations. (potential hyperparameter)
-    zero_tensor = tf.constant(0, shape=[], dtype="int32") # Represents zero for bounds checking in TensorFlow.
 
     input_image_size_x = input_image_size
     input_image_size_y = input_image_size
@@ -141,6 +121,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
     # Each iteration does one phi update [Represents one iteration of level-set ACM]
     def _body(i, phi_level):
         print('Level Set ACM Iteration: ', int((i+1).numpy()))
+
         # --- Identify the pixels within the narrow band (a region around the zero level set of ϕ)
         # band_index: A boolean tensor indicating whether each pixel in ϕ lies within the narrow band defined by narrow_band_width.
         band_index = tf.reduce_all([phi_level <= narrow_band_width, phi_level >= -narrow_band_width], axis=0)
@@ -149,42 +130,49 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         # Separate the x and y coordinates of the narrow band pixels
         band_y = band[:, 0]
         band_x = band[:, 1]
-
-        # Compute the mean intensities using either a fast lookup or a more detailed iterative approach.
+        print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
         
         # Reshaping distance map and image into 4 dimensions
         phi_4d = phi_level[tf.newaxis, :, :, tf.newaxis]
         image = img[tf.newaxis, :, :, tf.newaxis]
+        print('Phi_4d and image shapes: ', phi_4d.shape, image.shape)
+
         # Computing the new band indices around the contour
         band_index_2 = tf.reduce_all([phi_4d <= narrow_band_width, phi_4d >= -narrow_band_width], axis=0)
         band_2 = tf.where(band_index_2)
+        print('Band index 2 and band 2 shapes: ', band_index_2.shape, band_2.shape)
+
         # phi_4d <= 0 and phi_4d > 0 create masks for the inner and outer regions relative to the zero level-set.
         # tf.cast(..., dtype='float32') converts these boolean masks into float tensors (0.0 for False, 1.0 for True).
         # get_intensity computes the average intensity in a local region of the image 
         u_inner = get_intensity(image, tf.cast((([phi_4d <= 0])), dtype='float32')[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, tf.cast((([phi_4d > 0])), dtype='float32')[0], filter_patch_size=f_size)
+        print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
+
         # tf.gather_nd retrieves the values of u_inner and u_outer at the indices specified by band_2
         # These operations collect the computed mean intensities for the narrow band pixels, producing arrays of mean intensities 
         # for the inner and outer regions.
         mean_intensities_inner = tf.gather_nd(u_inner, band_2)
         mean_intensities_outer = tf.gather_nd(u_outer, band_2)
+        print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
 
         # --- Compute the update for the level set function ϕ
-        lambda1 = tf.gather_nd(map_lambda1_acl, [band]) # gathering the lambda 1 values in the narrow band
-        lambda2 = tf.gather_nd(map_lambda2_acl, [band]) # gathering the lambda 2 values in the narrow band
+
+        # Gather lambda1 and lambda2 values in the narrow band
+        lambda1 = tf.gather_nd(map_lambda1_acl, [band])
+        lambda2 = tf.gather_nd(map_lambda2_acl, [band])
+        print('Shape of lambdas: ', lambda1.shape, lambda2.shape)
+
         # Computes the curvature and mean gradient at the band locations of phi_level. 
-        # Curvature is related to the shape of the level set, and the mean gradient helps in regularizing the contour.
-        # Curvature and mean_grad are computed for each corresponding (x, y) coordinate, 
-        #   so their size will match the size of the input coordinate arrays x and y.
         curvature, mean_grad = get_curvature(phi_level, band_x, band_y) 
         # Multiplies the curvature by the mean gradient to get the combined effect of curvature regularization at each point in the narrow band.
         kappa = tf.multiply(curvature, mean_grad)
+        print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+
         # Computes the first term of the energy, which represents the inner region. 
         # It squares the difference between the pixel values (at band indices) and mean_intensities_inner, then scales it by lambda1.
-        # term1 = tf.multiply(tf.cast(lambda1, dtype='float32'),tf.square(tf.gather_nd(img, [band]) - mean_intensities_inner))
         term1 = tf.multiply(tf.cast(lambda1, dtype='float32'),tf.square(tf.cast(tf.gather_nd(img, [band]), dtype='float32') - mean_intensities_inner))
         # Similar to term1, but for the outer region. It scales the squared difference between the pixel values and mean_intensities_outer by lambda2.
-        # term2 = tf.multiply(tf.cast(lambda2, dtype='float32'),tf.square(tf.gather_nd(img, [band]) - mean_intensities_outer))
         term2 = tf.multiply(tf.cast(lambda2, dtype='float32'),tf.square(tf.cast(tf.gather_nd(img, [band]), dtype='float32') - mean_intensities_outer))
         # Computes the force applied to the level set function by combining the constant -nu (usually a balloon force) with term1 and term2. 
         # This force dictates the movement of the contour based on the image features.
@@ -192,12 +180,16 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         force = -nu + term1 - term2
         # Normalizes the force by dividing it by its maximum absolute value to prevent instability in the updates.
         force /= (tf.reduce_max(tf.abs(force)))
+        print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
+
         # Calculates the rate of change of phi by adding the force and the product of mu and kappa (which incorporates the curvature term).
         d_phi_dt = tf.cast(force, dtype="float32") + tf.cast(mu * kappa, dtype="float32")
         # Computes a time step dt for the update, ensuring it is scaled properly to maintain stability in the evolution of phi.
         dt = .45 / (tf.reduce_max(tf.abs(d_phi_dt)) + 2.220446049250313e-16)
         # Calculates the actual change d_phi to apply to phi by multiplying the rate of change by the time step.
         d_phi = dt * d_phi_dt
+        print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
+
         # --- Apply the calculated update to the level set function ϕ
         # Assigns d_phi to update_narrow_band to be applied to the narrow band of the level set function.
         update_narrow_band = d_phi
@@ -209,6 +201,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         #   A signed distance function phi (x,y) represents the distance from a point (x,y) to the closest point on a contour (or interface), 
         #       with a sign indicating whether the point is inside or outside the contour:
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
+        print('Phi level Shape', phi_level.shape)
 
         return (i + 1, phi_level)
 

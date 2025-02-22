@@ -11,9 +11,10 @@ cwd = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(cwd, '../acm/Level_Set_ACM')))
 
 import lsa_helpers as lsah
-#import LevelSetACM_tf as lsa
-import LevelSetACM_torch as lsa
-use_torch = True
+import LevelSetACM_tf as lsa
+use_torch = False
+# import LevelSetACM_torch as lsa
+# use_torch = True
 
 # ----- Original Brain Demo
 print('Testing Model ACM for Original Brain Demo')
@@ -25,6 +26,9 @@ init_seg_path = os.path.abspath(os.path.join(cwd, '../acm/dals_demo_brain/img1_i
 
 img = np.load(image_path)
 gt = lsah.normalize_mask(np.load(gt_path))
+
+# normalize image between 0 and 1
+#img = img/255.0
 
 print('Shape of the image: ', img.shape)
 print('min and max intensity values of image: ', np.min(img), np.max(img))
@@ -39,20 +43,23 @@ print('Shape of the initial segmentation: ', init_s.shape)
 is_prob_mask = lsah.is_binary_mask(init_s) or lsah.is_probability_mask(init_s)
 print('Probability mask check for initial segmentation: ', is_prob_mask) # probabilities between 0 and 1
 
-plt.imshow(img, cmap='gray')
-plt.show()
+# plt.imshow(img, cmap='gray')
+# plt.show()
 
-plt.imshow(gt, cmap='gray')
-plt.show()
+# plt.imshow(gt, cmap='gray')
+# plt.show()
 
-plt.imshow(init_s, cmap='gray')
-plt.show()
+# plt.imshow(init_s, cmap='gray')
+# plt.show()
 
 if use_torch:
     # convert image, gt, and init_s into torch tensors
     img = torch.tensor(img)
     gt = torch.tensor(gt)
     init_s = torch.tensor(init_s)
+    print(torch.min(img), torch.max(img))
+    print(torch.min(gt), torch.max(gt))
+    print(torch.min(init_s), torch.max(init_s))
 
 # lambdas
 map_lambda1, map_lambda2 = lsa.get_lambda_maps(init_s)
