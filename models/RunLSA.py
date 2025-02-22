@@ -1,7 +1,7 @@
 import os
 import sys
 
-from models.LevelSetACM import *
+from models.LevelSetACM_torch import *
 
 def acm_layer(intensity_image, initial_segmentation, num_iter, nu, mu):
 
