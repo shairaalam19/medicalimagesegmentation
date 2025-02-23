@@ -4,7 +4,31 @@ https://www.hoffman2.idre.ucla.edu/Accounts/Requesting-an-account.html
 Confirmation page: https://sim.idre.ucla.edu/sim/home 
 
 # Lab Cluster
+```bash 
 ssh salam@131.179.124.56
+```
+
+To move from local to ssh: 
+```bash
+cd medicalimagesegmentation/data
+scp covid19-ct-scan-lesion-segmentation-dataset.zip salam@131.179.124.56:/CGLab/salam/medicalimagesegmentation/data
+```
+
+## GPUs 
+Message from Zhi: 
+Contact if you wish to install system level package.
+
+Please store all files under the user home folder ~/ , and keep your home folder size under 500GB.
+
+The server is equipped with two A6000 GPUs. If one GPU is in use, you can specify which GPU to use by setting the environment variable in your command, for example:
+- For GPU 0: CUDA_VISIBLE_DEVICES=0 python main.py
+- For GPU 1: CUDA_VISIBLE_DEVICES=1 python main.py
+
+### Check Utilization
+Check utilization of each GPU here: 
+```bash
+nvidia-smi
+```
 
 # AWS Sagemaker
 ## Package Your Code
