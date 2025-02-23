@@ -11,6 +11,7 @@
 import tensorflow as tf
 from scipy.ndimage import distance_transform_edt
 import numpy as np
+import sys
 #print("TensorFlow version:", tf.__version__) # 2.18.0
 
 narrow_band_width = 1
@@ -96,7 +97,20 @@ def get_curvature(phi, x, y):
     return curvature, mean_grad
 
 def get_intensity(image, masked_phi, filter_patch_size=5):
+    print('image')
+    print(image)
+    print()
+
+    print('masked_phi')
+    print(masked_phi)
+    print()
+
     u_1 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(tf.multiply(image, masked_phi))
+
+    print('u_1')
+    print(u_1)
+    print()
+
     u_2 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(masked_phi)
     u_2_prime = 1 - tf.cast((u_2 > 0), dtype='float32') + tf.cast((u_2 < 0), dtype='float32')
     u_2 = u_2 + u_2_prime + 2.220446049250313e-16
@@ -120,7 +134,10 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
 
     # Each iteration does one phi update [Represents one iteration of level-set ACM]
     def _body(i, phi_level):
+        print()
+        print()
         print('Level Set ACM Iteration: ', int((i+1).numpy()))
+        #print(phi_level)
 
         # --- Identify the pixels within the narrow band (a region around the zero level set of ϕ)
         # band_index: A boolean tensor indicating whether each pixel in ϕ lies within the narrow band defined by narrow_band_width.
@@ -131,6 +148,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         band_y = band[:, 0]
         band_x = band[:, 1]
         print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
+        #print(band)
         
         # Reshaping distance map and image into 4 dimensions
         phi_4d = phi_level[tf.newaxis, :, :, tf.newaxis]
@@ -148,13 +166,17 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         u_inner = get_intensity(image, tf.cast((([phi_4d <= 0])), dtype='float32')[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, tf.cast((([phi_4d > 0])), dtype='float32')[0], filter_patch_size=f_size)
         print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
-
+        #print(u_inner)
+        #print(u_outer)
+        sys.exit()
         # tf.gather_nd retrieves the values of u_inner and u_outer at the indices specified by band_2
         # These operations collect the computed mean intensities for the narrow band pixels, producing arrays of mean intensities 
         # for the inner and outer regions.
         mean_intensities_inner = tf.gather_nd(u_inner, band_2)
         mean_intensities_outer = tf.gather_nd(u_outer, band_2)
         print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
+        #print(mean_intensities_inner)
+        #print(mean_intensities_outer)
 
         # --- Compute the update for the level set function ϕ
 
@@ -168,6 +190,9 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         # Multiplies the curvature by the mean gradient to get the combined effect of curvature regularization at each point in the narrow band.
         kappa = tf.multiply(curvature, mean_grad)
         print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+        # print(curvature)
+        # print(mean_grad)
+        # print(kappa)
 
         # Computes the first term of the energy, which represents the inner region. 
         # It squares the difference between the pixel values (at band indices) and mean_intensities_inner, then scales it by lambda1.
@@ -202,6 +227,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         #       with a sign indicating whether the point is inside or outside the contour:
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
         print('Phi level Shape', phi_level.shape)
+        #print(phi_level)
 
         return (i + 1, phi_level)
 

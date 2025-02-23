@@ -133,6 +133,8 @@ class EdgeSegmentationCNN(nn.Module):
             # send decoded throuh acm and then the output will be the final probability mask
             # TODO: call acm to get the output
             output = self.acm(intensity_image*255, decoded, acm_hyperparameters)
+            if(torch.isnan(output).any()):
+                output = decoded
             print("ACM Result", type(output), output.dtype, output.shape, output.min(), output.max())
 
         print(output.requires_grad)  # Should be True if gradients are tracked

@@ -6,15 +6,19 @@ import sys
 import math
 import matplotlib.pyplot as plt
 import torch
+# torch.set_printoptions(threshold=float('inf'))
+# np.set_printoptions(threshold=np.inf)
+torch.set_printoptions(10)
+np.set_printoptions(10)
 
 cwd = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(cwd, '../acm/Level_Set_ACM')))
 
 import lsa_helpers as lsah
-import LevelSetACM_tf as lsa
-use_torch = False
-# import LevelSetACM_torch as lsa
-# use_torch = True
+# import LevelSetACM_tf as lsa
+# use_torch = False
+import LevelSetACM_torch as lsa
+use_torch = True
 
 # ----- Original Brain Demo
 print('Testing Model ACM for Original Brain Demo')
@@ -57,9 +61,28 @@ if use_torch:
     img = torch.tensor(img)
     gt = torch.tensor(gt)
     init_s = torch.tensor(init_s)
-    print(torch.min(img), torch.max(img))
-    print(torch.min(gt), torch.max(gt))
-    print(torch.min(init_s), torch.max(init_s))
+    # print(torch.min(img), torch.max(img))
+    # print(torch.min(gt), torch.max(gt))
+    # print(torch.min(init_s), torch.max(init_s))
+
+# print("--------------- Image")
+# print(img)
+# print()
+# print(img.dtype) # float32
+# print()
+
+# print("--------------- Ground truth")
+# print(gt)
+# print()
+# print(gt.dtype)
+# print()
+
+# print("--------------- Initial Seg")
+# print(init_s)
+# print()
+# print(init_s.dtype) # float32
+# print(f"{init_s[0][0].item():.10f}")
+# print()
 
 # lambdas
 map_lambda1, map_lambda2 = lsa.get_lambda_maps(init_s)
@@ -70,12 +93,31 @@ map_lambda1, map_lambda2 = lsa.get_lambda_maps(init_s)
 # print('Type of map lambda 2: ', type(map_lambda2), map_lambda2.dtype) # <class 'tensorflow.python.framework.ops.EagerTensor'> <dtype: 'float32'>
 # print('Min max values of map lambda 2: ', np.min(map_lambda2), np.max(map_lambda2))
 
+# print("--------------- Map Lambda 1")
+# print(map_lambda1)
+# print()
+# print(map_lambda1.dtype) # float32
+# print()
+
+# print("--------------- Map Lambda 2")
+# print(map_lambda2)
+# print()
+# print(map_lambda2.dtype) # float32
+# print()
+
 # initial phi
 initial_phi = lsa.get_initial_phi(init_s)
 # print('Shape of initial phi: ', initial_phi.shape)
 # print('Type of initial phi: ', type(initial_phi), initial_phi.dtype) # <class 'numpy.ndarray'> float32
 # print('Min max values of initial phi: ', np.min(initial_phi), np.max(initial_phi))
 # # phi (signed distance map) is zero on the contour and signed inside and outside.
+
+# print("--------------- Initial Phi")
+# print(initial_phi)
+# print()
+# print(type(initial_phi))
+# print(initial_phi.dtype) # float32
+# print()
 
 # --- Initialize parameter elems to active_contour_layer function
 elems = (img, initial_phi, map_lambda1, map_lambda2)
@@ -87,11 +129,11 @@ print('Input image size y: ', input_image_size_y)
 if use_torch:
     nu = torch.tensor(5.0)
     mu = torch.tensor(0.2)
-    iter_limit = torch.tensor(600)
+    iter_limit = torch.tensor(1)
 else:
     nu = 5.0
     mu = 0.2
-    iter_limit = 600
+    iter_limit = 1
 
 # --- Call active_contour_layer function and get the final seg output
 final_seg, final_phi, final_prob_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
@@ -106,5 +148,14 @@ iou_score = lsah.iou_score(final_seg, gt)
 print('Final Dice score: ', dice_score)
 print('Final IOU score: ', iou_score)
 
-plt.imshow(final_seg, cmap='gray')
-plt.show()
+# plt.imshow(final_seg, cmap='gray')
+# plt.show()
+
+# Displaying the contour evolution
+# plt.figure(figsize=(8, 8))
+# plt.imshow(img, cmap='gray')
+# plt.contour(initial_phi, levels=[0], colors='red', linewidths=2)
+# plt.contour(final_phi, levels=[0], colors='blue', linewidths=2)
+# plt.title("ACM Contour Evolution: Red-initial, Blue-final")
+# plt.axis('off')
+# plt.show()

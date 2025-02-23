@@ -71,7 +71,7 @@ def re_init_phi(phi, dt, input_image_size_x, input_image_size_y):
 
     tmp2 = torch.max(torch.stack([an[neg_y, neg_x]**2, bp[neg_y, neg_x]**2]), dim=0)[0]
     tmp2 += torch.max(torch.stack([cn[neg_y, neg_x]**2, dp[neg_y, neg_x]**2]), dim=0)[0]
-    print('Value of tmp 2: ', tmp2)
+    #print('Value of tmp 2: ', tmp2)
     #update2 = torch.sqrt(torch.abs(tmp2) + 1e-10) - 1
     update2 = torch.sqrt(torch.abs(tmp2)) - 1
 
@@ -125,7 +125,21 @@ def get_curvature(phi, x, y):
     return curvature, mean_grad
 
 def get_intensity(image, masked_phi, filter_patch_size=5):
+
+    print('image')
+    print(image)
+    print()
+
+    print('masked_phi')
+    print(masked_phi)
+    print()
+
     u_1 = F.avg_pool2d(image * masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
+
+    print('u_1')
+    print(u_1)
+    print()
+
     u_2 = F.avg_pool2d(masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
 
     u_2_prime = 1 - (u_2 > 0).float() + (u_2 < 0).float()
@@ -133,6 +147,42 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
     u_2 = u_2 + u_2_prime + 2.220446049250313e-16
 
     return u_1 / u_2
+
+# def get_intensity(image, masked_phi, filter_patch_size=5):
+
+#     print('image')
+#     print(image)
+#     print()
+
+#     print('masked_phi')
+#     print(masked_phi)
+#     print()
+
+
+#     pooled_input = image * masked_phi  # Element-wise multiplication
+#     filter_size = (filter_patch_size, filter_patch_size)
+
+#     # Compute padding to achieve 'SAME' padding
+#     pad_h = (filter_patch_size - 1) // 2
+#     pad_w = (filter_patch_size - 1) // 2
+
+#     # Apply padding
+#     pooled_input_padded = F.pad(pooled_input, (pad_w, pad_w, pad_h, pad_h), mode='replicate')
+
+#     # Apply average pooling
+#     u_1 = F.avg_pool2d(pooled_input_padded, kernel_size=filter_size, stride=1)
+
+#     print('u_1')
+#     print(u_1)
+#     print()
+
+#     u_2 = F.avg_pool2d(masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
+
+#     u_2_prime = 1 - (u_2 > 0).float() + (u_2 < 0).float()
+#     #u_2 = u_2 + u_2_prime + 1e-16
+#     u_2 = u_2 + u_2_prime + 2.220446049250313e-16
+
+#     return u_1 / u_2
 
 def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.0, mu=0.2, iter_limit=300):
     img = elems[0]  # input image - 2D tensor
@@ -144,13 +194,17 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
     input_image_size_y = input_image_size_2 if input_image_size_2 is not None else input_image_size
 
     def _body(i, phi_level):
+        print()
+        print()
         print('Level Set ACM Iteration: ', int((i+1).numpy()))
+        #print(phi_level)
 
         # --- Identify the pixels within the narrow band
         band_index = torch.logical_and(phi_level <= narrow_band_width, phi_level >= -narrow_band_width)
         band = torch.nonzero(band_index, as_tuple=False)
         band_y, band_x = band[:, 0], band[:, 1]  # Separate x and y coordinates
         print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
+        #print(band)
 
         # Reshape distance map and image into 4D tensors
         phi_4d = phi_level.unsqueeze(0).unsqueeze(-1)  # Shape: (1, H, W, 1)
@@ -166,11 +220,15 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         u_inner = get_intensity(image, (phi_4d <= 0).float()[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, (phi_4d > 0).float()[0], filter_patch_size=f_size)
         print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
-
+        # print(u_inner)
+        # print(u_outer)
+        sys.exit()
         # Gather mean intensities for the narrow band
         mean_intensities_inner = u_inner[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
         mean_intensities_outer = u_outer[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
         print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
+        # print(mean_intensities_inner)
+        # print(mean_intensities_outer)
 
         # Gather lambda1 and lambda2 values in the narrow band
         lambda1 = map_lambda1_acl[band[:, 0], band[:, 1]]
@@ -181,6 +239,9 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         curvature, mean_grad = get_curvature(phi_level, band_x, band_y)
         kappa = curvature * mean_grad
         print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+        # print(curvature)
+        # print(mean_grad)
+        # print(kappa)
 
         # Compute energy terms
         term1 = lambda1.float() * (img[band[:, 0], band[:, 1]].float() - mean_intensities_inner) ** 2
@@ -206,6 +267,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         # Reinitialize phi for numerical stability
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
         print('Phi level Shape', phi_level.shape)
+        #print(phi_level)
 
         return i + 1, phi_level
 
@@ -228,7 +290,6 @@ def my_func(mask):
         return distance_transform_edt(np.logical_not(im))
     bw = mask
     signed_dist = bwdist(bw) - bwdist(1 - bw)
-
     # Convert back to PyTorch tensor, but retain the original tensor's device
     # We must ensure that the new tensor is on the same device as the original mask.
     d = torch.tensor(signed_dist, dtype=torch.float32, device=mask.device)
@@ -238,8 +299,14 @@ def my_func(mask):
     #print(d.shape, d[0][0])
 
     d += epsilon
-    while torch.count_nonzero(d < 0) < 5:
-        d -= 1
+
+    if(isinstance(d,torch.Tensor)):
+        while torch.count_nonzero(d < 0) < 5:
+            d -= 1
+    else:
+        while np.count_nonzero(d < 0) < 5:
+            d -= 1
+    
     return d
 
 def get_lambda_maps(out_seg):
