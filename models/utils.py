@@ -72,7 +72,7 @@ def train_model(model, train_loader, criterion, optimizer):
         print(f"Epoch {epoch + 1}/{config['EPOCHS']}, Loss: {epoch_loss:.4f}")
 
         # Adjust learning rate based on loss
-        scheduler.step(epoch_loss) # based on what the epoch loss is (rate of change)
+        # scheduler.step(epoch_loss) # based on what the epoch loss is (rate of change)
         scheduler.step() # just constant scheduling 
 
         # If epoch loss is negative
@@ -83,8 +83,7 @@ def train_model(model, train_loader, criterion, optimizer):
         last_epoch = epoch
         epoch_losses.append(epoch_loss)  # Store the loss for plotting
 
-        if (epoch + 1) % 5 == 0: 
-            save_model(model, f"epoch_{epoch + 1}", model_folder)
+        save_model(model, f"epoch_{epoch + 1}", model_folder)
 
     print("Training complete!")
 
@@ -163,7 +162,10 @@ def load_model(model_path, model_name):
 
     print(f"Loading model from: {model_path}")
 
-    model = EdgeSegmentationCNN()
+    # Instantiating model architecture 
+    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"])
+
+    # Loading saved model onto model architecture 
     model.load_state_dict(torch.load(model_path))
 
     return model

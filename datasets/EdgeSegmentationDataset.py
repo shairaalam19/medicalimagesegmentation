@@ -41,9 +41,12 @@ class EdgeSegmentationDataset(Dataset):
             target_mask_pil = self.transform(target_mask_pil)
 
         # Convert to PyTorch tensors
-        input_tensor = torch.tensor(np.array(input_image_pil), dtype=torch.float32)  
-        target_tensor = torch.tensor(np.array(target_mask_pil), dtype=torch.float32)  
+        input_tensor = torch.tensor(np.array(input_image_pil), dtype=torch.float32) 
+        target_tensor = torch.tensor(np.array(target_mask_pil), dtype=torch.float32) 
 
+        # print(f"Input tensor min: {input_tensor.min()}, max: {input_tensor.max()}")
+        # print(f"Target tensor min: {target_tensor.min()}, max: {target_tensor.max()}")
+        
         return input_tensor, target_tensor, filename
     
     def create_dataset(self, matching_files, dataset_size): 
@@ -73,8 +76,10 @@ class EdgeSegmentationDataset(Dataset):
             target_mask = target_mask.astype(np.float32) / 255.0
 
             # Convert to PIL format (useful for applying transformations)
-            input_image_pil = Image.fromarray((input_image * 255).astype('uint8'))
-            target_mask_pil = Image.fromarray((target_mask * 255).astype('uint8'))
+            # input_image_pil = Image.fromarray((input_image * 255).astype('uint8'))
+            # target_mask_pil = Image.fromarray((target_mask * 255).astype('uint8'))
+            input_image_pil = Image.fromarray(input_image)
+            target_mask_pil = Image.fromarray(target_mask)
 
             data.append((input_image_pil, target_mask_pil, filename))
             

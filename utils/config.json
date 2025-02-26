@@ -1,6 +1,6 @@
 {
     "DEMO": false,
-    "PRETRAINING": false,
+    "PRETRAINING": true,
     "TRAIN": true,
     "TEST": false,
     "ACM": false,
@@ -13,7 +13,7 @@
     "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/frames",
     "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/masks",
 
-    "EPOCHS": 200,
+    "EPOCHS": 155,
     "LEARNING_RATE": 0.0001,
 
     "BCE_LOSS": true,
@@ -21,11 +21,11 @@
     "IOU_LOSS": false,
     "DICE_LOSS": false,
 
-    "EDGE_ATTENTION": false,
+    "EDGE_ATTENTION": true,
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
 
-    "LOAD_MODEL_FOLDER": "outputs/models/20250131_125420", 
+    "LOAD_MODEL_FOLDER": "outputs/models/20250221_072434", 
     "MODEL_NAME": "epoch_10.pth", 
 
     "MODEL_OUTPUT_FOLDER": "outputs/results/models",

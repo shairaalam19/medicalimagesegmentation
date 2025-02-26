@@ -8,10 +8,31 @@ Confirmation page: https://sim.idre.ucla.edu/sim/home
 ssh salam@131.179.124.56
 ```
 
-To move from local to ssh: 
+To move files from local to ssh: 
 ```bash
 cd medicalimagesegmentation/data
 scp covid19-ct-scan-lesion-segmentation-dataset.zip salam@131.179.124.56:/CGLab/salam/medicalimagesegmentation/data
+```
+
+For a session
+```bash
+screen -S MIS_training_1
+python main.py
+```
+
+To detach from screen without stopping execution
+```arduino
+Ctrl + A, then press D
+```
+
+Exit SSH safely 
+```bash
+exit
+```
+
+Reattach to your screen session when you log back in 
+```bash
+screen -r MIS_training_1
 ```
 
 ## GPUs 
