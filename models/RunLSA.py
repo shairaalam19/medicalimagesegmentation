@@ -5,7 +5,7 @@ from models.LevelSetACM_torch import *
 
 def acm_layer(intensity_image, initial_segmentation, num_iter, nu, mu):
 
-    # Note: image, ground truth, and initial segmentation all have the same shape.
+    # Note: image and initial segmentation all have the same shape.
 
     # --- From initial segmentation get lambdas and initial phi (they would also have the same shape)
 

@@ -129,7 +129,7 @@ print('Input image size y: ', input_image_size_y)
 if use_torch:
     nu = torch.tensor(5.0)
     mu = torch.tensor(0.2)
-    iter_limit = torch.tensor(1)
+    iter_limit = torch.tensor(600)
 else:
     nu = 5.0
     mu = 0.2
@@ -148,14 +148,14 @@ iou_score = lsah.iou_score(final_seg, gt)
 print('Final Dice score: ', dice_score)
 print('Final IOU score: ', iou_score)
 
-# plt.imshow(final_seg, cmap='gray')
-# plt.show()
+plt.imshow(final_seg, cmap='gray')
+plt.show()
 
 # Displaying the contour evolution
-# plt.figure(figsize=(8, 8))
-# plt.imshow(img, cmap='gray')
-# plt.contour(initial_phi, levels=[0], colors='red', linewidths=2)
-# plt.contour(final_phi, levels=[0], colors='blue', linewidths=2)
-# plt.title("ACM Contour Evolution: Red-initial, Blue-final")
-# plt.axis('off')
-# plt.show()
+plt.figure(figsize=(8, 8))
+plt.imshow(img, cmap='gray')
+plt.contour(initial_phi, levels=[0], colors='red', linewidths=2)
+plt.contour(final_phi, levels=[0], colors='blue', linewidths=2)
+plt.title("ACM Contour Evolution: Red-initial, Blue-final")
+plt.axis('off')
+plt.show()

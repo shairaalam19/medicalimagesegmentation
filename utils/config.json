@@ -13,7 +13,7 @@
     "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/frames",
     "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/masks",
 
-    "EPOCHS": 1,
+    "EPOCHS": 10,
     "LEARNING_RATE": 0.0001,
 
     "BCE_LOSS": true,

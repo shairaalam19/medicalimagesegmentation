@@ -66,14 +66,14 @@ def re_init_phi(phi, dt, input_image_size_x, input_image_size_y):
     # Compute updates
     tmp1 = torch.max(torch.stack([ap[pos_y, pos_x]**2, bn[pos_y, pos_x]**2]), dim=0)[0]
     tmp1 += torch.max(torch.stack([cp[pos_y, pos_x]**2, dn[pos_y, pos_x]**2]), dim=0)[0]
-    #update1 = torch.sqrt(torch.abs(tmp1) + 1e-10) - 1
-    update1 = torch.sqrt(torch.abs(tmp1)) - 1
+    update1 = torch.sqrt(torch.abs(tmp1) + 2.220446049250313e-16) - 1
+    #update1 = torch.sqrt(torch.abs(tmp1)) - 1
 
     tmp2 = torch.max(torch.stack([an[neg_y, neg_x]**2, bp[neg_y, neg_x]**2]), dim=0)[0]
     tmp2 += torch.max(torch.stack([cn[neg_y, neg_x]**2, dp[neg_y, neg_x]**2]), dim=0)[0]
     #print('Value of tmp 2: ', tmp2)
-    #update2 = torch.sqrt(torch.abs(tmp2) + 1e-10) - 1
-    update2 = torch.sqrt(torch.abs(tmp2)) - 1
+    update2 = torch.sqrt(torch.abs(tmp2) + 2.220446049250313e-16) - 1 # torch.abs() has a gradient discontinuity at 0
+    #update2 = torch.sqrt(torch.abs(tmp2)) - 1
 
     # Create indices and updates
     indices1 = torch.stack([pos_y, pos_x], dim=1)
@@ -117,28 +117,28 @@ def get_curvature(phi, x, y):
 
     tmp_1 = d_phi_dx_2 * d_phi_dyy + d_phi_dy_2 * d_phi_dxx - 2 * (d_phi_dx * d_phi_dy * d_phi_dxy)
     tmp_2 = (d_phi_dx_2 + d_phi_dy_2) ** 1.5 + 2.220446049250313e-16
-    tmp_3 = (d_phi_dx_2 + d_phi_dy_2) ** 0.5
+    tmp_3 = (d_phi_dx_2 + d_phi_dy_2 + 2.220446049250313e-16) ** 0.5
     tmp_4 = tmp_1 / tmp_2
     curvature = tmp_3 * tmp_4
-    mean_grad = (d_phi_dx_2 + d_phi_dy_2) ** 0.5
+    mean_grad = (d_phi_dx_2 + d_phi_dy_2 + 2.220446049250313e-16) ** 0.5
 
     return curvature, mean_grad
 
 def get_intensity(image, masked_phi, filter_patch_size=5):
 
-    print('image')
-    print(image)
-    print()
+    # print('image')
+    # print(image)
+    # print()
 
-    print('masked_phi')
-    print(masked_phi)
-    print()
+    # print('masked_phi')
+    # print(masked_phi)
+    # print()
 
     u_1 = F.avg_pool2d(image * masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
 
-    print('u_1')
-    print(u_1)
-    print()
+    # print('u_1')
+    # print(u_1)
+    # print()
 
     u_2 = F.avg_pool2d(masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
 
@@ -150,31 +150,30 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
 
 # def get_intensity(image, masked_phi, filter_patch_size=5):
 
-#     print('image')
-#     print(image)
-#     print()
+#     # print('image')
+#     # print(image)
+#     # print()
 
-#     print('masked_phi')
-#     print(masked_phi)
-#     print()
+#     # print('masked_phi')
+#     # print(masked_phi)
+#     # print()
 
 
-#     pooled_input = image * masked_phi  # Element-wise multiplication
-#     filter_size = (filter_patch_size, filter_patch_size)
+#     pad_total = filter_patch_size - 1
+#     pad_left = pad_total // 2
+#     pad_right = pad_total - pad_left
+#     pad_top = pad_left
+#     pad_bottom = pad_right
 
-#     # Compute padding to achieve 'SAME' padding
-#     pad_h = (filter_patch_size - 1) // 2
-#     pad_w = (filter_patch_size - 1) // 2
-
-#     # Apply padding
-#     pooled_input_padded = F.pad(pooled_input, (pad_w, pad_w, pad_h, pad_h), mode='replicate')
+#     # Apply explicit padding before pooling
+#     padded_input = F.pad(image * masked_phi, (pad_left, pad_right, pad_top, pad_bottom), mode='replicate')
 
 #     # Apply average pooling
-#     u_1 = F.avg_pool2d(pooled_input_padded, kernel_size=filter_size, stride=1)
+#     u_1 = F.avg_pool2d(padded_input, kernel_size=filter_patch_size, stride=1)
 
-#     print('u_1')
-#     print(u_1)
-#     print()
+#     # print('u_1')
+#     # print(u_1)
+#     # print()
 
 #     u_2 = F.avg_pool2d(masked_phi, kernel_size=filter_patch_size, stride=1, padding=filter_patch_size // 2)
 
@@ -220,13 +219,16 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         u_inner = get_intensity(image, (phi_4d <= 0).float()[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, (phi_4d > 0).float()[0], filter_patch_size=f_size)
         print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
+        print("Checking if get intensity is returning any nan: ", torch.isnan(u_inner).any(), torch.isnan(u_outer).any())
         # print(u_inner)
         # print(u_outer)
-        sys.exit()
+        # sys.exit()
+
         # Gather mean intensities for the narrow band
         mean_intensities_inner = u_inner[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
         mean_intensities_outer = u_outer[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
         print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
+        print("Checking if mean intensities are nan: ", torch.isnan(mean_intensities_inner).any(), torch.isnan(mean_intensities_outer).any())
         # print(mean_intensities_inner)
         # print(mean_intensities_outer)
 
@@ -239,6 +241,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         curvature, mean_grad = get_curvature(phi_level, band_x, band_y)
         kappa = curvature * mean_grad
         print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+        print("Checking curvature, mean_grad, kappa has nans: ", torch.isnan(curvature).any(), torch.isnan(mean_grad).any(), torch.isnan(kappa).any())
         # print(curvature)
         # print(mean_grad)
         # print(kappa)
@@ -248,25 +251,29 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         term2 = lambda2.float() * (img[band[:, 0], band[:, 1]].float() - mean_intensities_outer) ** 2
         # Compute force and normalize
         force = -nu + term1 - term2
-        force = force / torch.max(torch.abs(force))
+        if force.numel() > 0: force = force / (torch.max(torch.abs(force)) + 2.220446049250313e-16)
         print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
+        print("Checking term1, term2, force has nans: ", torch.isnan(term1).any(), torch.isnan(term2).any(), torch.isnan(force).any())
 
         # Compute update step
         d_phi_dt = force + mu * kappa.float()
         dt = 0.45 / (torch.max(torch.abs(d_phi_dt)) + 2.220446049250313e-16)
         d_phi = dt * d_phi_dt
         print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
+        print('Checking if gradients have any nans: ', torch.isnan(d_phi_dt).any(), torch.isnan(dt).any(), torch.isnan(d_phi).any())
 
         # --- Apply the update to the level set function ϕ
         phi_update = torch.zeros_like(phi_level)
         phi_update[band[:, 0], band[:, 1]] = d_phi
         print('Phi Update Shape', phi_update.shape) # 1024, 1024
+        print('Checking if phi update has any nans: ', torch.isnan(phi_update).any())
 
         phi_level = phi_level + phi_update  # Update phi_level in the narrow band
         print('Extreme values in phi_level: ', torch.max(phi_level), torch.min(phi_level))
         # Reinitialize phi for numerical stability
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
         print('Phi level Shape', phi_level.shape)
+        print('Checking if re-initialized phi has any nans: ', torch.isnan(phi_level).any())
         #print(phi_level)
 
         return i + 1, phi_level

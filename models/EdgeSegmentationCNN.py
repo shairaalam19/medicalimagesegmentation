@@ -131,11 +131,11 @@ class EdgeSegmentationCNN(nn.Module):
             output = decoded
         else:
             # send decoded throuh acm and then the output will be the final probability mask
-            # TODO: call acm to get the output
             output = self.acm(intensity_image*255, decoded, acm_hyperparameters)
-            print("ACM Result", type(output), output.dtype, output.shape, output.min(), output.max())
+            # print("ACM Result: ", type(output), output.dtype, output.shape, output.min(), output.max())
+            # print("Making sure the acm hyperparameters require grad: ", acm_hyperparameters.requires_grad)
+            # print("Making sure the elements of acm hyperparameters require grad: ", acm_hyperparameters[0][0].requires_grad)
 
-        print(output.requires_grad)  # Should be True if gradients are tracked
-        #sys.exit()
+        # print("Making sure the output requires grad: ", output.requires_grad)  # Should be True if gradients are tracked
 
         return output
