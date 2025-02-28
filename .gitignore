@@ -9,5 +9,5 @@ data/medical
 data/animals
 acm/Results
 outputs/results/models/*
-outputs/models/*
+outputs/models/training/*
 **/__pycache__/
