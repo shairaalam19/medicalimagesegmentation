@@ -257,7 +257,8 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
 
         # Compute update step
         d_phi_dt = force + mu * kappa.float()
-        dt = 0.45 / (torch.max(torch.abs(d_phi_dt)) + 2.220446049250313e-16)
+        if d_phi_dt.numel() > 0: dt = 0.45 / (torch.max(torch.abs(d_phi_dt)) + 2.220446049250313e-16)
+        else: dt = 0.45 / (torch.max(torch.abs(torch.tensor([1]))) + 2.220446049250313e-16)
         d_phi = dt * d_phi_dt
         print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
         print('Checking if gradients have any nans: ', torch.isnan(d_phi_dt).any(), torch.isnan(dt).any(), torch.isnan(d_phi).any())

@@ -1,6 +1,6 @@
 {
     "DEMO": false,
-    "PRETRAINING": false,
+    "PRETRAINING": true,
     "TRAIN": true,
     "TEST": true,
     "ACM": true,
@@ -25,8 +25,8 @@
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
 
-    "LOAD_MODEL_FOLDER": "", 
-    "MODEL_NAME": "", 
+    "LOAD_MODEL_FOLDER": "outputs/models/pre-trained-test", 
+    "MODEL_NAME": "edge_segmentation_pretrained_model.pth", 
 
     "MODEL_OUTPUT_FOLDER": "outputs/results/models",
     "SAVE_MODEL_FOLDER": "outputs/models",

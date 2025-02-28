@@ -158,12 +158,30 @@ def save_loss_graph(batch_losses, output_folder, title, file_name):
 # Load Model Function
 # -----------------------------------------------------------
 def load_model(model_path, model_name):
-    model_path = os.path.join(model_path, model_name)
+    # model_path = os.path.join(model_path, model_name)
+    # print(f"Loading model from: {model_path}")
+    # model = EdgeSegmentationCNN()
+    # model.load_state_dict(torch.load(model_path))
 
-    print(f"Loading model from: {model_path}")
+    pretrained_model_path = os.path.join(model_path, model_name)
+    print(f"Loading model information from: {pretrained_model_path}")
+    pretrained_state_dict = torch.load(pretrained_model_path)
 
-    model = EdgeSegmentationCNN()
-    model.load_state_dict(torch.load(model_path))
+    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"], use_acm=config["ACM"]) # Latest architecture
+    #model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"]) # Latest architecture
+    # Get the state dict of the current model architecture (ex: with acm layers added)
+    model_state_dict = model.state_dict()
+
+    # Merge weights from the pretrained model
+    merged_state_dict = {}
+    for name, param in model_state_dict.items():
+        if name in pretrained_state_dict and pretrained_state_dict[name].size() == param.size():
+            merged_state_dict[name] = pretrained_state_dict[name]
+        else:
+            merged_state_dict[name] = param  # Keep new layers initialized as they are
+
+    # Load the merged state dict into the model
+    model.load_state_dict(merged_state_dict)
 
     return model
 
