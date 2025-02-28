@@ -1,17 +1,17 @@
 {
     "DEMO": false,
-    "PRETRAINING": true,
-    "TRAIN": true,
-    "TEST": false,
+    "PRETRAINING": false,
+    "TRAIN": false,
+    "TEST": true,
     "ACM": false,
     
     "DEMO_DATASET_SIZE": 4,
-    "MODEL_DATASET_SIZE": 2000,
+    "MODEL_DATASET_SIZE": 10,
     "TRAINING_BATCH_SIZE": 4,
     "TEST_BATCH_SIZE": 1,
     "TEST_SPLIT_RATIO": 0.1,
-    "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/frames",
-    "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/masks",
+    "INPUT_DATASET_FOLDER": "data/demo/frames",
+    "TARGET_DATASET_FOLDER": "data/demo/masks",
 
     "EPOCHS": 155,
     "LEARNING_RATE": 0.0001,
@@ -25,8 +25,8 @@
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
 
-    "LOAD_MODEL_FOLDER": "outputs/models/20250221_072434", 
-    "MODEL_NAME": "epoch_10.pth", 
+    "LOAD_MODEL_FOLDER": "outputs/models/20250225_145046", 
+    "MODEL_NAME": "epoch_42.pth", 
 
     "MODEL_OUTPUT_FOLDER": "outputs/results/models",
     "SAVE_MODEL_FOLDER": "outputs/models",
