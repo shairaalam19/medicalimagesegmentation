@@ -26,7 +26,7 @@ class ActiveContourLayer(nn.Module):
         for i in range(B):
             num_iter, nu, mu = acm_params[i]  # Extract hyperparameters for sample i
 
-            num_iter = torch.tensor(10, dtype=torch.float32) # testing on low defined number of iterations
+            # num_iter = torch.tensor(10, dtype=torch.float32) # testing on low defined number of iterations
 
             # print("ACM Hyperparameters: ", num_iter, nu, mu)
             # # ACM Hyperparameters:  tensor(258., grad_fn=<UnbindBackward0>) tensor(6.6076, grad_fn=<UnbindBackward0>) tensor(0.6891, grad_fn=<UnbindBackward0>)

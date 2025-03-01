@@ -30,7 +30,7 @@ def train_model(model, train_loader, criterion, optimizer):
     # Save model file 
     save_file("models/EdgeSegmentationCNN.py", model_folder)
     save_file("utils/config.json", model_folder)
-    torch.autograd.set_detect_anomaly(True)
+    # torch.autograd.set_detect_anomaly(True)
     # Start training 
     model.train() # enables features liek dropout or batch noramlization 
 

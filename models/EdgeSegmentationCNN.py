@@ -86,7 +86,7 @@ class EdgeSegmentationCNN(nn.Module):
             acm_hyperparameters = self.acm_hyperparameter_generator(bottleneck_output)
 
             acm_hyperparameters = torch.cat([
-                torch.round(acm_hyperparameters[:, 0:1] * 500),  # Scale between 0 and 500 - num_iters
+                torch.round(acm_hyperparameters[:, 0:1] * 100),  # Scale between 0 and 500 - num_iters
                 acm_hyperparameters[:, 1:2] * 10, # Scale between 0 and 10 - nu
                 acm_hyperparameters[:, 2:3] * 1.0 # Scale between 0 and 1 - mu
             ], dim=1)
