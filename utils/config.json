@@ -26,7 +26,7 @@
     "DEFINE_EDGES_AFTER": false,
 
     "LOAD_MODEL_FOLDER": "outputs/models/20250225_145046", 
-    "MODEL_NAME": "epoch_42.pth", 
+    "MODEL_NAME": "epoch_46.pth", 
 
     "MODEL_OUTPUT_FOLDER": "outputs/results/models/training",
     "SAVE_MODEL_FOLDER": "outputs/models",
