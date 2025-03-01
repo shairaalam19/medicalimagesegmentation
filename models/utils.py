@@ -158,11 +158,14 @@ def save_loss_graph(batch_losses, output_folder, title, file_name):
 # Load Model Function
 # -----------------------------------------------------------
 def load_model(model_path, model_name):
-    # model_path = os.path.join(model_path, model_name)
-    # print(f"Loading model from: {model_path}")
-    # model = EdgeSegmentationCNN()
-    # model.load_state_dict(torch.load(model_path))
+    model_path = os.path.join(model_path, model_name)
+    print(f"Loading model from: {model_path}")
+    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"], use_acm=config["ACM"])
+    model.load_state_dict(torch.load(model_path))
+    return model
 
+def load_model_pretrained(model_path, model_name):
+    
     pretrained_model_path = os.path.join(model_path, model_name)
     print(f"Loading model information from: {pretrained_model_path}")
     pretrained_state_dict = torch.load(pretrained_model_path)

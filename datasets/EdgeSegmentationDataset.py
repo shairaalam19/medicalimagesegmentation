@@ -53,7 +53,7 @@ class EdgeSegmentationDataset(Dataset):
         # print(np.min(input_image_array), np.max(input_image_array)) # 0.0 0.92156863
 
         # We want the target to be a binary mask
-        target_mask_array = (target_mask_array >= 0.5).astype(np.float32)
+        #target_mask_array = (target_mask_array >= 0.5).astype(np.float32)
 
         # print('After converting target mask to binary array:')
         # print(target_mask_array.shape) #1, 1024,1024
@@ -110,8 +110,10 @@ class EdgeSegmentationDataset(Dataset):
             # print(np.min(input_image), np.max(input_image)) # 0.05882353 1.0
 
             # Convert to PIL format (useful for applying transformations)
-            input_image_pil = Image.fromarray((input_image * 255).astype('uint8'))
-            target_mask_pil = Image.fromarray((target_mask * 255).astype('uint8'))
+            # input_image_pil = Image.fromarray((input_image * 255).astype('uint8'))
+            # target_mask_pil = Image.fromarray((target_mask * 255).astype('uint8'))
+            input_image_pil = Image.fromarray(input_image)
+            target_mask_pil = Image.fromarray(target_mask)
 
             # Now everything is back to 0 to 255 uint8 range and converted to PIL image
 

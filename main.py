@@ -7,7 +7,7 @@ from torch import nn, optim
 from utils.utils import load_config
 from models.EdgeSegmentationCNN import EdgeSegmentationCNN 
 from models.EdgeSegmentationLoss import EdgeSegmentationLoss 
-from models.utils import save_model, load_model, test_model, train_model, demo_model
+from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model
 from datasets.utils import load_dataset, split_dataset, save_combined_image
 from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 
@@ -54,7 +54,7 @@ def main():
                 exit()
             # load pretrained model 
             else: 
-                model = load_model(config["LOAD_MODEL_FOLDER"], config["MODEL_NAME"])
+                model = load_model_pretrained(config["LOAD_MODEL_FOLDER"], config["MODEL_NAME"])
 
                 # Optionally, freeze some layers if you don't want to train the whole model
                 # for param in model.encoder.parameters():  # Example: freezing encoder layers
