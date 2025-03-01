@@ -18,14 +18,11 @@ def acm_layer(intensity_image, initial_segmentation, num_iter, nu, mu):
 
     # --- Initialize parameter elems to active_contour_layer function
     elems = (intensity_image, initial_phi, map_lambda1, map_lambda2)
-    input_image_size_x = intensity_image.shape[1]
-    input_image_size_y = intensity_image.shape[0]
 
-    print('Shapes of inputs to active contour layer: ', intensity_image.shape, initial_phi.shape, map_lambda1.shape, map_lambda2.shape)
+    # print('Shapes of inputs to active contour layer: ', intensity_image.shape, initial_phi.shape, map_lambda1.shape, map_lambda2.shape)
 
     # --- Call active_contour_layer function and get the final seg output
-    final_binary_segmentation, final_phi, final_probability_mask = active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
-                                                        nu=nu, mu=mu, iter_limit = num_iter)
+    final_binary_segmentation, final_phi, final_probability_mask = active_contour_layer(elems=elems, nu=nu, mu=mu, iter_limit=num_iter)
     
     # return final probability mask
     return final_probability_mask

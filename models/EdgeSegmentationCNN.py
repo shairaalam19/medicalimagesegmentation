@@ -7,6 +7,7 @@ import sys
 from models.AttentionBlock import Attention, EdgeAttention
 from models.EdgeSegmentation import get_edges
 from models.ActiveContourBlock import ActiveContourLayer
+from models.LevelSetACM_torch import *
 
 class EdgeSegmentationCNN(nn.Module):
     def __init__(self, edge_attention=False, define_edges_before=False, define_edges_after=False, use_acm=False):
@@ -54,7 +55,8 @@ class EdgeSegmentationCNN(nn.Module):
             nn.Flatten(),  # Flatten the 1x1x64 tensor to 64
             nn.Linear(64, 32),  # Reduce to 32 neurons
             nn.ReLU(),
-            nn.Linear(32, 3)  # Output 3 values corresponding to ACM hyperparameters - num_iter, nu, mu
+            nn.Linear(32, 3),
+            nn.Sigmoid() # Output 3 values corresponding to unscaled ACM hyperparameters - num_iter, nu, mu
         )
 
         # Decoder: upsamples features to reconstruct an edge-detected image 
@@ -69,7 +71,7 @@ class EdgeSegmentationCNN(nn.Module):
 
     def forward(self, x):
 
-        intensity_image = x
+        intensity_image = 255 * x
 
         if self.define_edges_before: 
             print("Defining edges before encoder")
@@ -83,31 +85,16 @@ class EdgeSegmentationCNN(nn.Module):
 
         if(self.use_acm):
             acm_hyperparameters = self.acm_hyperparameter_generator(bottleneck_output)
-            # Need to ensure that the first hyperparameter [num_iter] is an integer
-            # acm_hyperparameters[:, 0] = torch.round(acm_hyperparameters[:, 0])
-            # # Enforcing a range to focus on for num_iter
-            # acm_hyperparameters[:, 0] = torch.clamp(acm_hyperparameters[:, 0], min=1, max=3000)
-            # # Enforcing a range to focus on for nu, mu
-            # acm_hyperparameters[:, 1:] = torch.clamp(acm_hyperparameters[:, 1:], min=0, max=100)
+            # acm_hyperparameters[:, 0] = torch.round(acm_hyperparameters[:, 0] * 500)  # Scale between 0 and 500 - num_iters
+            # acm_hyperparameters[:, 1] = acm_hyperparameters[:, 1] * 10  # Scale between 0 and 10 - nu
+            # acm_hyperparameters[:, 2] = acm_hyperparameters[:, 2] * 1.0  # Scale between 0 and 1 - mu
 
-            # Ensure that the first hyperparameter [num_iter] is an integer
-            acm_hyperparameters = torch.cat((
-                torch.round(acm_hyperparameters[:, 0]).unsqueeze(1),  # Round and keep the first column
-                acm_hyperparameters[:, 1:]  # Keep the rest of the columns unchanged
-            ), dim=1)
-
-            # Enforcing a range to focus on for num_iter
-            acm_hyperparameters = torch.cat((
-                torch.clamp(acm_hyperparameters[:, 0], min=1, max=3000).unsqueeze(1),  # Clamp the first column
-                acm_hyperparameters[:, 1:]  # Keep the rest unchanged
-            ), dim=1)
-
-            # Enforcing a range to focus on for nu, mu
-            acm_hyperparameters = torch.cat((
-                acm_hyperparameters[:, 0].unsqueeze(1),  # Keep the first column unchanged
-                torch.clamp(acm_hyperparameters[:, 1:], min=0, max=100)  # Clamp the rest of the columns
-            ), dim=1)
-
+            acm_hyperparameters = torch.cat([
+                torch.round(acm_hyperparameters[:, 0:1] * 500),
+                acm_hyperparameters[:, 1:2] * 10,
+                acm_hyperparameters[:, 2:3] * 1.0
+            ], dim=1)
+        
 
         decoded = self.decoder(bottleneck_output)
 
@@ -115,27 +102,35 @@ class EdgeSegmentationCNN(nn.Module):
             print("Defining edges after decoder")
             decoded = get_edges(decoded)
 
-        
         # print("Understanding forward function results: ")
 
         # print("Intensity Image", type(intensity_image), intensity_image.dtype, intensity_image.shape, intensity_image.min(), intensity_image.max())
         # # Intensity Image <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024]) tensor(0.) tensor(1.)
 
         # print("ACM Hyperparameters", type(acm_hyperparameters), acm_hyperparameters.dtype, acm_hyperparameters.shape, acm_hyperparameters.min(), acm_hyperparameters.max())
-        # # ACM Hyperparameters <class 'torch.Tensor'> torch.float32 torch.Size([4, 3]) tensor(0.0699, grad_fn=<MinBackward1>) tensor(0.1567, grad_fn=<MaxBackward1>)
+        # print("Number of iterations", type(acm_hyperparameters[:, 0]), acm_hyperparameters[:, 0].dtype, acm_hyperparameters[:, 0].shape, acm_hyperparameters[:, 0].min(), acm_hyperparameters[:, 0].max())
+        # print("Nu", type(acm_hyperparameters[:, 1]), acm_hyperparameters[:, 1].dtype, acm_hyperparameters[:, 1].shape, acm_hyperparameters[:, 1].min(), acm_hyperparameters[:, 1].max())
+        # print("Mu", type(acm_hyperparameters[:, 2]), acm_hyperparameters[:, 2].dtype, acm_hyperparameters[:, 2].shape, acm_hyperparameters[:, 2].min(), acm_hyperparameters[:, 2].max())
 
+        # # ACM Hyperparameters <class 'torch.Tensor'> torch.float32 torch.Size([4, 3]) tensor(0.4980, grad_fn=<MinBackward1>) tensor(238., grad_fn=<MaxBackward1>)
+        # # Number of iterations <class 'torch.Tensor'> torch.float32 torch.Size([4]) tensor(245., grad_fn=<MinBackward1>) tensor(261., grad_fn=<MaxBackward1>)
+        # # Nu <class 'torch.Tensor'> torch.float32 torch.Size([4]) tensor(5.0567, grad_fn=<MinBackward1>) tensor(5.1261, grad_fn=<MaxBackward1>)
+        # # Mu <class 'torch.Tensor'> torch.float32 torch.Size([4]) tensor(0.3923, grad_fn=<MinBackward1>) tensor(0.4105, grad_fn=<MaxBackward1>)
+        
         # print("Probability Mask", type(decoded), decoded.dtype, decoded.shape, decoded.min(), decoded.max())
         # # Probability Mask <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024]) tensor(0.4191, grad_fn=<MinBackward1>) tensor(0.4278, grad_fn=<MaxBackward1>)
 
         if(not self.use_acm):
             output = decoded
         else:
-            # send decoded throuh acm and then the output will be the final probability mask
-            output = self.acm(intensity_image*255, decoded, acm_hyperparameters)
-            # print("ACM Result: ", type(output), output.dtype, output.shape, output.min(), output.max())
-            # print("Making sure the acm hyperparameters require grad: ", acm_hyperparameters.requires_grad)
-            # print("Making sure the elements of acm hyperparameters require grad: ", acm_hyperparameters[0][0].requires_grad)
+            # --- Send decoded throuh acm and then the output will be the final probability mask
+            output = self.acm(intensity_image, decoded, acm_hyperparameters)
 
+            # Checking results
+            # print("ACM Result: ", type(output), output.dtype, output.shape, output.min(), output.max())
+            # # ACM Result:  <class 'torch.Tensor'> torch.float32 torch.Size([4, 1, 1024, 1024]) tensor(0.1576, grad_fn=<MinBackward1>) tensor(0.7887, grad_fn=<MaxBackward1>)
+            # print("Making sure the acm hyperparameters require grad: ", acm_hyperparameters[:, 0].requires_grad, acm_hyperparameters[:, 1].requires_grad, acm_hyperparameters[:, 2].requires_grad)
+            
         # print("Making sure the output requires grad: ", output.requires_grad)  # Should be True if gradients are tracked
 
         return output

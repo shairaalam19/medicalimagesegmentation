@@ -183,43 +183,43 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
 
 #     return u_1 / u_2
 
-def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.0, mu=0.2, iter_limit=300):
+def active_contour_layer(elems, nu=5.0, mu=0.2, iter_limit=300):
     img = elems[0]  # input image - 2D tensor
     init_phi = elems[1]  # initial distance map - 2D tensor
     map_lambda1_acl = elems[2]  # weight map inside contour - 2D tensor
     map_lambda2_acl = elems[3]  # weight map outside contour - 2D tensor
     
-    input_image_size_x = input_image_size
-    input_image_size_y = input_image_size_2 if input_image_size_2 is not None else input_image_size
+    input_image_size_x = img.shape[1]
+    input_image_size_y = img.shape[0]
 
     def _body(i, phi_level):
-        print()
-        print()
-        print('Level Set ACM Iteration: ', int((i+1).numpy()))
+        # print()
+        # print()
+        # print('Level Set ACM Iteration: ', int((i+1).numpy()))
         #print(phi_level)
 
         # --- Identify the pixels within the narrow band
         band_index = torch.logical_and(phi_level <= narrow_band_width, phi_level >= -narrow_band_width)
         band = torch.nonzero(band_index, as_tuple=False)
         band_y, band_x = band[:, 0], band[:, 1]  # Separate x and y coordinates
-        print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
+        # print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
         #print(band)
 
         # Reshape distance map and image into 4D tensors
         phi_4d = phi_level.unsqueeze(0).unsqueeze(-1)  # Shape: (1, H, W, 1)
         image = img.unsqueeze(0).unsqueeze(-1)  # Shape: (1, H, W, 1)
-        print('Phi_4d and image shapes: ', phi_4d.shape, image.shape)
+        # print('Phi_4d and image shapes: ', phi_4d.shape, image.shape)
 
         # Compute new band indices
         band_index_2 = torch.logical_and(phi_4d <= narrow_band_width, phi_4d >= -narrow_band_width)
         band_2 = torch.nonzero(band_index_2, as_tuple=False)
-        print('Band index 2 and band 2 shapes: ', band_index_2.shape, band_2.shape)
+        # print('Band index 2 and band 2 shapes: ', band_index_2.shape, band_2.shape)
 
         # Compute intensities inside and outside level set
         u_inner = get_intensity(image, (phi_4d <= 0).float()[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, (phi_4d > 0).float()[0], filter_patch_size=f_size)
-        print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
-        print("Checking if get intensity is returning any nan: ", torch.isnan(u_inner).any(), torch.isnan(u_outer).any())
+        # print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
+        # print("Checking if get intensity is returning any nan: ", torch.isnan(u_inner).any(), torch.isnan(u_outer).any())
         # print(u_inner)
         # print(u_outer)
         # sys.exit()
@@ -227,21 +227,21 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         # Gather mean intensities for the narrow band
         mean_intensities_inner = u_inner[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
         mean_intensities_outer = u_outer[band_2[:, 0], band_2[:, 1], band_2[:, 2], band_2[:, 3]]
-        print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
-        print("Checking if mean intensities are nan: ", torch.isnan(mean_intensities_inner).any(), torch.isnan(mean_intensities_outer).any())
+        # print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
+        # print("Checking if mean intensities are nan: ", torch.isnan(mean_intensities_inner).any(), torch.isnan(mean_intensities_outer).any())
         # print(mean_intensities_inner)
         # print(mean_intensities_outer)
 
         # Gather lambda1 and lambda2 values in the narrow band
         lambda1 = map_lambda1_acl[band[:, 0], band[:, 1]]
         lambda2 = map_lambda2_acl[band[:, 0], band[:, 1]]
-        print('Shape of lambdas: ', lambda1.shape, lambda2.shape)
+        # print('Shape of lambdas: ', lambda1.shape, lambda2.shape)
 
         # Compute curvature and gradient regularization
         curvature, mean_grad = get_curvature(phi_level, band_x, band_y)
         kappa = curvature * mean_grad
-        print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
-        print("Checking curvature, mean_grad, kappa has nans: ", torch.isnan(curvature).any(), torch.isnan(mean_grad).any(), torch.isnan(kappa).any())
+        # print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+        # print("Checking curvature, mean_grad, kappa has nans: ", torch.isnan(curvature).any(), torch.isnan(mean_grad).any(), torch.isnan(kappa).any())
         # print(curvature)
         # print(mean_grad)
         # print(kappa)
@@ -252,29 +252,29 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
         # Compute force and normalize
         force = -nu + term1 - term2
         if force.numel() > 0: force = force / (torch.max(torch.abs(force)) + 2.220446049250313e-16)
-        print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
-        print("Checking term1, term2, force has nans: ", torch.isnan(term1).any(), torch.isnan(term2).any(), torch.isnan(force).any())
+        # print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
+        # print("Checking term1, term2, force has nans: ", torch.isnan(term1).any(), torch.isnan(term2).any(), torch.isnan(force).any())
 
         # Compute update step
         d_phi_dt = force + mu * kappa.float()
         if d_phi_dt.numel() > 0: dt = 0.45 / (torch.max(torch.abs(d_phi_dt)) + 2.220446049250313e-16)
         else: dt = 0.45 / (torch.max(torch.abs(torch.tensor([1]))) + 2.220446049250313e-16)
         d_phi = dt * d_phi_dt
-        print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
-        print('Checking if gradients have any nans: ', torch.isnan(d_phi_dt).any(), torch.isnan(dt).any(), torch.isnan(d_phi).any())
+        # print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
+        # print('Checking if gradients have any nans: ', torch.isnan(d_phi_dt).any(), torch.isnan(dt).any(), torch.isnan(d_phi).any())
 
         # --- Apply the update to the level set function ϕ
         phi_update = torch.zeros_like(phi_level)
         phi_update[band[:, 0], band[:, 1]] = d_phi
-        print('Phi Update Shape', phi_update.shape) # 1024, 1024
-        print('Checking if phi update has any nans: ', torch.isnan(phi_update).any())
+        # print('Phi Update Shape', phi_update.shape) # 1024, 1024
+        # print('Checking if phi update has any nans: ', torch.isnan(phi_update).any())
 
         phi_level = phi_level + phi_update  # Update phi_level in the narrow band
-        print('Extreme values in phi_level: ', torch.max(phi_level), torch.min(phi_level))
+        # print('Extreme values in phi_level: ', torch.max(phi_level), torch.min(phi_level))
         # Reinitialize phi for numerical stability
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
-        print('Phi level Shape', phi_level.shape)
-        print('Checking if re-initialized phi has any nans: ', torch.isnan(phi_level).any())
+        # print('Phi level Shape', phi_level.shape)
+        # print('Checking if re-initialized phi has any nans: ', torch.isnan(phi_level).any())
         #print(phi_level)
 
         return i + 1, phi_level
@@ -290,39 +290,84 @@ def active_contour_layer(elems, input_image_size, input_image_size_2=None, nu=5.
     
     return phi, phi_dis_map, final_prob_mask
 
-def my_func(mask):
-    epsilon = 0
-    # Helper function for distance transform using SciPy
-    def bwdist(im):
-        im = im.detach().cpu().numpy()  # Convert tensor to NumPy array for SciPy
-        return distance_transform_edt(np.logical_not(im))
-    bw = mask
-    signed_dist = bwdist(bw) - bwdist(1 - bw)
-    # Convert back to PyTorch tensor, but retain the original tensor's device
-    # We must ensure that the new tensor is on the same device as the original mask.
-    d = torch.tensor(signed_dist, dtype=torch.float32, device=mask.device)
-
-    # Now ensure the new tensor is part of the computation graph, so we need to enable gradients on it.
-    # d.requires_grad_()  # Re-enable gradient tracking for the tensor
-    #print(d.shape, d[0][0])
-
-    d += epsilon
-
-    if(isinstance(d,torch.Tensor)):
-        while torch.count_nonzero(d < 0) < 5:
-            d -= 1
-    else:
-        while np.count_nonzero(d < 0) < 5:
-            d -= 1
-    
-    return d
-
 def get_lambda_maps(out_seg):
     map_lambda1 = torch.exp((2.0 - out_seg) / (1.0 + out_seg))
     map_lambda2 = torch.exp((1.0 + out_seg) / (2.0 - out_seg))
     return map_lambda1, map_lambda2
 
-def get_initial_phi(out_seg):
-    binary_seg = torch.round(out_seg)
-    dt_trans = my_func(binary_seg) 
+# def my_func(mask):
+#     epsilon = 0
+
+#     # Helper function for distance transform using SciPy
+#     def bwdist(im):
+#         # im = im.detach().cpu().numpy()  # Convert tensor to NumPy array for SciPy
+#         im = im.detach().cpu().numpy()
+#         # return distance_transform_edt(np.logical_not(im))
+#         return distance_transform_edt(np.logical_not(im))
+    
+#     bw = mask
+#     signed_dist = bwdist(bw) - bwdist(1 - bw)
+#     # Convert back to PyTorch tensor, but retain the original tensor's device
+#     # We must ensure that the new tensor is on the same device as the original mask.
+#     d = torch.tensor(signed_dist, dtype=torch.float32, device=mask.device)
+
+#     # Now ensure the new tensor is part of the computation graph, so we need to enable gradients on it.
+#     # d.requires_grad_()  # Re-enable gradient tracking for the tensor
+#     #print(d.shape, d[0][0])
+
+#     d += epsilon
+
+#     if(isinstance(d,torch.Tensor)):
+#         while torch.count_nonzero(d < 0) < 5:
+#             d -= 1
+#     else:
+#         while np.count_nonzero(d < 0) < 5:
+#             d -= 1
+    
+#     return d
+
+# def get_initial_phi(out_seg):
+#     binary_seg = torch.round(out_seg)
+#     dt_trans = my_func(binary_seg)
+#     return dt_trans
+
+def differentiable_distance_transform(mask, sigma=1.0, iterations=5):
+    """
+    Differentiable Signed Distance Transform using Gaussian smoothing.
+    Args:
+        mask: (H, W) Binary mask tensor
+        sigma: Gaussian kernel standard deviation
+        iterations: Number of blur iterations to improve sharpness
+    Returns:
+        signed_distance: (H, W) Signed distance map
+    """
+    mask = mask.float()
+    kernel_size = int(2 * sigma + 1)
+    x = torch.arange(-kernel_size // 2 + 1, kernel_size // 2 + 1, device=mask.device).float()
+    grid = x[:, None] ** 2 + x[None, :] ** 2
+    kernel = torch.exp(-grid / (2 * sigma ** 2))
+    kernel /= kernel.sum()
+
+    kernel = kernel.view(1, 1, kernel_size, kernel_size)
+
+    blurred = mask.unsqueeze(0).unsqueeze(0)  # Add batch + channel dimensions
+
+    for _ in range(iterations):
+        blurred = F.conv2d(blurred, kernel, padding=kernel_size // 2)
+
+    distance_field = 0.5 - blurred.squeeze(0).squeeze(0)  # Remove batch + channel dimensions
+    signed_distance = distance_field / distance_field.max().clamp(min=1e-6)
+
+    return signed_distance
+
+def get_initial_phi(mask):
+    """
+    Computes initial phi using the differentiable distance transform.
+    Args:
+        mask: (H, W) Probability mask (float between 0 and 1)
+    Returns:
+        Signed distance map (H, W)
+    """
+    binary_seg = torch.round(mask)  # Binarize the mask
+    dt_trans = differentiable_distance_transform(binary_seg)
     return dt_trans

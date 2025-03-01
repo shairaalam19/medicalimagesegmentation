@@ -121,10 +121,6 @@ initial_phi = lsa.get_initial_phi(init_s)
 
 # --- Initialize parameter elems to active_contour_layer function
 elems = (img, initial_phi, map_lambda1, map_lambda2)
-input_image_size_x = img.shape[1]
-input_image_size_y = img.shape[0]
-print('Input image size x: ', input_image_size_x)
-print('Input image size y: ', input_image_size_y)
 
 if use_torch:
     nu = torch.tensor(5.0)
@@ -136,8 +132,7 @@ else:
     iter_limit = 1
 
 # --- Call active_contour_layer function and get the final seg output
-final_seg, final_phi, final_prob_mask = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
-                                        nu=nu, mu=mu, iter_limit = iter_limit) 
+final_seg, final_phi, final_prob_mask = lsa.active_contour_layer(elems=elems, nu=nu, mu=mu, iter_limit=iter_limit)
 print('Type of final segmentation mask: ', type(final_seg)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
 print('Shape of final segmentation mask: ', final_seg.shape)
 print('binary mask check for final segmentation: ', lsah.is_binary_mask(final_seg))
