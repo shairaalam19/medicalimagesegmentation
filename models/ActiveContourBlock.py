@@ -1,6 +1,12 @@
 import torch
 import torch.nn as nn
-from models.RunLSA import *
+import os
+import sys
+
+cwd = os.path.dirname(__file__)
+sys.path.append(os.path.abspath(os.path.join(cwd, '../acm/model_utils')))
+
+from RunLSA import acm_layer
 
 class ActiveContourLayer(nn.Module):
     def __init__(self):
@@ -20,7 +26,7 @@ class ActiveContourLayer(nn.Module):
         for i in range(B):
             num_iter, nu, mu = acm_params[i]  # Extract hyperparameters for sample i
 
-            num_iter = torch.tensor(10, dtype=torch.float32) # testing
+            num_iter = torch.tensor(10, dtype=torch.float32) # testing on low defined number of iterations
 
             # print("ACM Hyperparameters: ", num_iter, nu, mu)
             # # ACM Hyperparameters:  tensor(258., grad_fn=<UnbindBackward0>) tensor(6.6076, grad_fn=<UnbindBackward0>) tensor(0.6891, grad_fn=<UnbindBackward0>)

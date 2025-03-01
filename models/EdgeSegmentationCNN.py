@@ -7,7 +7,6 @@ import sys
 from models.AttentionBlock import Attention, EdgeAttention
 from models.EdgeSegmentation import get_edges
 from models.ActiveContourBlock import ActiveContourLayer
-from models.LevelSetACM_torch import *
 
 class EdgeSegmentationCNN(nn.Module):
     def __init__(self, edge_attention=False, define_edges_before=False, define_edges_after=False, use_acm=False):
@@ -85,14 +84,11 @@ class EdgeSegmentationCNN(nn.Module):
 
         if(self.use_acm):
             acm_hyperparameters = self.acm_hyperparameter_generator(bottleneck_output)
-            # acm_hyperparameters[:, 0] = torch.round(acm_hyperparameters[:, 0] * 500)  # Scale between 0 and 500 - num_iters
-            # acm_hyperparameters[:, 1] = acm_hyperparameters[:, 1] * 10  # Scale between 0 and 10 - nu
-            # acm_hyperparameters[:, 2] = acm_hyperparameters[:, 2] * 1.0  # Scale between 0 and 1 - mu
 
             acm_hyperparameters = torch.cat([
-                torch.round(acm_hyperparameters[:, 0:1] * 500),
-                acm_hyperparameters[:, 1:2] * 10,
-                acm_hyperparameters[:, 2:3] * 1.0
+                torch.round(acm_hyperparameters[:, 0:1] * 500),  # Scale between 0 and 500 - num_iters
+                acm_hyperparameters[:, 1:2] * 10, # Scale between 0 and 10 - nu
+                acm_hyperparameters[:, 2:3] * 1.0 # Scale between 0 and 1 - mu
             ], dim=1)
         
 

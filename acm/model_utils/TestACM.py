@@ -12,7 +12,7 @@ torch.set_printoptions(10)
 np.set_printoptions(10)
 
 cwd = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(cwd, '../acm/Level_Set_ACM')))
+sys.path.append(os.path.abspath(os.path.join(cwd, '../Level_Set_ACM')))
 
 import lsa_helpers as lsah
 # import LevelSetACM_tf as lsa
