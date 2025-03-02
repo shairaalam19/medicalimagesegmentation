@@ -167,6 +167,21 @@ def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
     
     plt.close()
 
+def displayACMScores(iterations, dice_scores, iou_scores, acm_dir):
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(iterations, dice_scores, label='DICE Score', color='blue', marker='o')
+    plt.plot(iterations, iou_scores, label='IoU Score', color='green', marker='x')
+
+    plt.xlabel('Iterations')
+    plt.ylabel('Score')
+    plt.title('DICE and IoU Scores vs ACM Iterations')
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot
+    plt.savefig(os.path.join(acm_dir, 'acm_scores_plot.png'), dpi=300, bbox_inches='tight')
+
 def apply_blur_plus_clahe(image, sigma=1.0, clipLimit=2.0):
     """
     Applies Gaussian blurring followed by contrast limited adaptive histogram equalization (CLAHE) to a grayscale image.

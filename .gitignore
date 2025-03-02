@@ -7,7 +7,6 @@ data/ISIC
 data/chase_db1
 data/medical
 data/animals
-acm/Results
 outputs/results/models/*
 outputs/models/training/*
 outputs/models/*

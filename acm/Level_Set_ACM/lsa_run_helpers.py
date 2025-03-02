@@ -115,7 +115,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
         lsah.displayImage(img, "Image", True, save_dir=acm_dir)
         #lsah.AnalyzeCoordinates(os.path.join(acm_dir, "Image.png"))
         lsah.displayImage(gt, "Ground Truth", True, save_dir=acm_dir)
-        init_s_title = 'Initial Segmentation' + '_' + 'DICE-{0:0.3f}'.format(init_dice_score) + '_' + 'IOU-{0:0.3f}'.format(init_iou_score)
+        init_s_title = 'Initial-Segmentation' + '_' + 'DICE-{0:0.3f}'.format(init_dice_score) + '_' + 'IOU-{0:0.3f}'.format(init_iou_score)
         lsah.displayImage(init_s, init_s_title, True, save_dir=acm_dir)
         
     # ------- Note: AT THIS POINT IMAGE, GROUND TRUTH, AND INITIAL SEGMENTATION SHOULD BE IN A STATE FOR ACM PROCESSING
@@ -145,9 +145,13 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
     print('Input image size x: ', input_image_size_x)
     print('Input image size y: ', input_image_size_y)
 
+    dice_scores = [init_dice_score]
+    iou_scores = [init_iou_score]
+    iterations = [0]
+
     # --- Call active_contour_layer function and get the final seg output
     final_seg, final_phi, _ = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
-                                         nu=nu, mu=mu, iter_limit = iter_lim, acm_dir=acm_dir, freq=save_freq, gt=gt) 
+                                         nu=nu, mu=mu, iter_limit = iter_lim, acm_dir=acm_dir, freq=save_freq, gt=gt, dice_scores=dice_scores, iou_scores=iou_scores, iterations=iterations) 
     print('Type of final segmentation mask: ', type(final_seg)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
     print('Shape of final segmentation mask: ', final_seg.shape)
     print('binary mask check for final segmentation: ', lsah.is_binary_mask(final_seg))
@@ -156,14 +160,19 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
     iou_score = lsah.iou_score(final_seg, gt)
     print('Final Dice score: ', dice_score)
     print('Final IOU score: ', iou_score)
+    iterations.append(iter_lim)
+    dice_scores.append(dice_score)
+    iou_scores.append(iou_score)
 
     # Display of final result
     if(acm_dir):
         # final segmentation
-        final_s_title = 'Final Segmentation' + '_' + 'DICE-{0:0.3f}'.format(dice_score) + '_' + 'IOU-{0:0.3f}'.format(iou_score)
+        final_s_title = 'Final-Segmentation' + '_' + 'DICE-{0:0.3f}'.format(dice_score) + '_' + 'IOU-{0:0.3f}'.format(iou_score)
         lsah.displayImage(final_seg, final_s_title, True, acm_dir)
         # final contours
         lsah.displayACMResult(img, initial_phi, final_phi, acm_dir)
+        # plotting a graph of dice and iou losses
+        lsah.displayACMScores(iterations, dice_scores, iou_scores, acm_dir)
 
     # Will be returning a dictionary of information in case needed
     result = {}

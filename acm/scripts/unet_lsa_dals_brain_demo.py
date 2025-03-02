@@ -16,10 +16,11 @@ print()
 image_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_input.npy'))
 gt_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_label.npy'))
 init_seg_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_initseg.npy'))
-acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour'))
-#acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour/abc'))
 
+acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour'))
 result = lsarh.run_lsa(image_path, gt_path, init_seg=init_seg_path, acm_dir=acm_dir, iter_lim=600)
+
+#acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour/abc'))
 #result = lsarh.run_lsa(image_path, gt_path, init_seg=init_seg_path, acm_dir=acm_dir, abc=True, iter_lim=600)
 
 # ----- Testing non-square input version [expect identical results]

@@ -7,6 +7,7 @@ from skimage import data
 from skimage.filters import gaussian
 from skimage.segmentation import active_contour
 from skimage.io import imread
+import sys
 
 # Helper function for defining intial contour given center coordinates and radius
 def CreateInitCircContour(c_x, c_y, radius):
@@ -36,46 +37,46 @@ def GetDefaultInitContourParams(img):
 
 # -----------------------Image 1: astronaut
 
-img = data.astronaut()
-img = rgb2gray(img) # converting to grayscale makes it easier for contour detection
+# img = data.astronaut()
+# img = rgb2gray(img) # converting to grayscale makes it easier for contour detection
 
-init = CreateInitCircContour(100,220,100)
+# init = CreateInitCircContour(100,220,100)
 
-# Variable snake will store the final contour
-snake = active_contour(
-    gaussian(img, sigma=3, preserve_range=False), # smoothing image with a gaussian filter - applying gaussian blurring - greater sigma, greater blur
-    init, # starting contour
-    alpha=0.015, # controls tension
-    beta=10, # controls smoothness
-    gamma=0.001, # controls step-size
-    # The default parameters w_line=0, w_edge=1 will make the curve search towards edges, such as the boundaries of the face.
-)
-#print ("Shape of final contour: ", snake.shape) # (400, 2) - points of the original contour are iteratively updates (hence same shape)
+# # Variable snake will store the final contour
+# snake = active_contour(
+#     gaussian(img, sigma=3, preserve_range=False), # smoothing image with a gaussian filter - applying gaussian blurring - greater sigma, greater blur
+#     init, # starting contour
+#     alpha=0.015, # controls tension
+#     beta=10, # controls smoothness
+#     gamma=0.001, # controls step-size
+#     # The default parameters w_line=0, w_edge=1 will make the curve search towards edges, such as the boundaries of the face.
+# )
+# #print ("Shape of final contour: ", snake.shape) # (400, 2) - points of the original contour are iteratively updates (hence same shape)
 
-DisplayACMResult(img, init, snake)
+# DisplayACMResult(img, init, snake)
 
 # ------------------Image 2: Cat
 
-img = imread("dataset/animals/cat.jpg")
-img = rgb2gray(img)  # Convert to grayscale
+# img = imread("../../data/animals/cat.jpg")
+# img = rgb2gray(img)  # Convert to grayscale
 
-center_row, center_col, radius = GetDefaultInitContourParams(img)
-init = CreateInitCircContour(center_row, center_col, radius)
+# center_row, center_col, radius = GetDefaultInitContourParams(img)
+# init = CreateInitCircContour(center_row, center_col, radius)
 
-snake = active_contour(
-    gaussian(img, sigma=3, preserve_range=False), # smoothing image with a gaussian filter - applying gaussian blurring - greater sigma, greater blur
-    init, # starting contour
-    alpha=0.015, # controls tension
-    beta=0, # controls smoothness
-    gamma=0.001, # controls step-size
-    # The default parameters w_line=0, w_edge=1 will make the curve search towards edges.
-)
+# snake = active_contour(
+#     gaussian(img, sigma=3, preserve_range=False), # smoothing image with a gaussian filter - applying gaussian blurring - greater sigma, greater blur
+#     init, # starting contour
+#     alpha=0.015, # controls tension
+#     beta=10, # controls smoothness
+#     gamma=0.001, # controls step-size
+#     # The default parameters w_line=0, w_edge=1 will make the curve search towards edges.
+# )
 
-DisplayACMResult(img, init, snake)
+# DisplayACMResult(img, init, snake)
 
 # ------------------Image 3: Dog
 
-img = imread("dataset/animals/dog.jpeg")
+img = imread("../../data/animals/dog.jpeg")
 img = rgb2gray(img)  # Convert to grayscale
 
 center_row, center_col, radius = GetDefaultInitContourParams(img)
@@ -84,9 +85,10 @@ init = CreateInitCircContour(center_row, center_col, radius)
 snake = active_contour(
     gaussian(img, sigma=3, preserve_range=False), # smoothing image with a gaussian filter - applying gaussian blurring - greater sigma, greater blur
     init, # starting contour
-    alpha=0.015, # controls tension
-    beta=0, # controls smoothness
+    alpha=0.001, # controls tension
+    beta=1, # controls smoothness
     gamma=0.001, # controls step-size
+    #max_num_iter=5000,
     # The default parameters w_line=0, w_edge=1 will make the curve search towards edges.
 )
 
