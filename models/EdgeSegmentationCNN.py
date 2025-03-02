@@ -21,7 +21,6 @@ class EdgeSegmentationCNN(nn.Module):
         self.define_edges_before = define_edges_before
         self.define_edges_after = define_edges_after
         self.use_acm = use_acm
-        self.acm = ActiveContourLayer()
 
         # Encoder: downsamples to extract features and reduces the spatial dimensions 
         self.encoder = nn.Sequential(
@@ -48,15 +47,18 @@ class EdgeSegmentationCNN(nn.Module):
             nn.ReLU()
         )
 
-        # Output of bottleneck will be like (H_reduced, W_reduced, 64)
-        self.acm_hyperparameter_generator = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),  # Global spatial pooling to reduce to 1x1x64
-            nn.Flatten(),  # Flatten the 1x1x64 tensor to 64
-            nn.Linear(64, 32),  # Reduce to 32 neurons
-            nn.ReLU(),
-            nn.Linear(32, 3),
-            nn.Sigmoid() # Output 3 values corresponding to unscaled ACM hyperparameters - num_iter, nu, mu
-        )
+        if self.use_acm: 
+            self.acm = ActiveContourLayer()
+            
+            # Output of bottleneck will be like (H_reduced, W_reduced, 64)
+            self.acm_hyperparameter_generator = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),  # Global spatial pooling to reduce to 1x1x64
+                nn.Flatten(),  # Flatten the 1x1x64 tensor to 64
+                nn.Linear(64, 32),  # Reduce to 32 neurons
+                nn.ReLU(),
+                nn.Linear(32, 3),
+                nn.Sigmoid() # Output 3 values corresponding to unscaled ACM hyperparameters - num_iter, nu, mu
+            )
 
         # Decoder: upsamples features to reconstruct an edge-detected image 
         self.decoder = nn.Sequential(

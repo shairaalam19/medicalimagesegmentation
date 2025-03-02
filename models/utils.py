@@ -43,7 +43,6 @@ def train_model(model, train_loader, criterion, optimizer):
         factor=0.5,        # Reduce LR by a factor of 0.5 (i.e., new LR = old LR * 0.5)
         patience=3,        # Wait for 3 epochs before reducing LR if no improvement
         threshold=1e-4,    # Minimum change in metric to qualify as an improvement
-        verbose=True       # Print messages when LR is reduced
     )
     # scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5) # reduces learning rate every few epochs 
     # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.9)  # Reduce LR by 10% every epoch
@@ -62,6 +61,8 @@ def train_model(model, train_loader, criterion, optimizer):
     for epoch in range(config["EPOCHS"]): # iterates through the number of epochs 
         running_loss = 0.0
         for inputs, targets, __ in train_loader:
+            optimizer.zero_grad() # clears any previously accumulated gradients (updates based only on current mini batch)
+            
             # Forward pass
             outputs = model(inputs) # computes model's current predictions for the given input 
 
@@ -69,7 +70,6 @@ def train_model(model, train_loader, criterion, optimizer):
             loss = criterion(outputs, targets)  # Compare output with the target 
 
             # Backward pass and optimization
-            optimizer.zero_grad() # clears any previously accumulated gradients (updates based only on current mini batch)
             loss.backward() # gradients of the loss wrt model's parameters using back propagation
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_value)  # Apply gradient clipping when weight updates become too large 
@@ -98,6 +98,9 @@ def train_model(model, train_loader, criterion, optimizer):
 
         last_epoch = epoch
         epoch_losses.append(epoch_loss)  # Store the loss for plotting
+
+        learning_rate = scheduler.get_last_lr()
+        print(f"Learning rate after epoch {epoch}: {learning_rate}")
 
         save_model(model, f"epoch_{epoch + 1}", model_folder)
 
@@ -312,16 +315,12 @@ def demo_model(demo_loader):
 
     print("Demo Complete!")
 
-import os
-import json
-import numpy as np
-from sklearn.metrics import roc_auc_score, precision_recall_fscore_support, jaccard_score
 
 def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, average_loss, output_folder, threshold=0.5):
     """
     Compute performance metrics for binary segmentation on a **per-image** basis 
     and for the entire test dataset.
-    
+
     Args:
         all_targets (list of numpy arrays): List of ground truth binary masks.
         all_outputs (list of numpy arrays): List of model-predicted probabilities.
@@ -332,9 +331,9 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         threshold (float): Threshold for converting probabilities to binary predictions.
 
     Returns:
-        None (Saves metrics to JSON files).
+        None (Saves all metrics in a single JSON file).
     """
-    all_metrics = {}
+    metrics_dict = {}
 
     # Compute metrics for each image
     for idx, file_name in enumerate(all_file_names):
@@ -352,7 +351,7 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         iou = jaccard_score(target, binary_output, average='binary', zero_division=0)
         dice = (2 * iou) / (1 + iou) if iou > 0 else 0  # Avoid division by zero
 
-        image_metrics = {
+        metrics_dict[file_name] = {
             "AUROC": auroc,
             "AUC": auroc,  
             "Precision": precision,
@@ -361,13 +360,6 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
             "IoU": iou,
             "Dice Score": dice
         }
-        
-        # Save individual image metrics
-        image_metrics_path = os.path.join(output_folder, f"{os.path.basename(file_name)}_metrics.json")
-        with open(image_metrics_path, "w") as f:
-            json.dump(image_metrics, f, indent=4)
-
-        all_metrics[file_name] = image_metrics
 
     # Compute overall metrics (aggregate across all images)
     all_outputs_flat = np.concatenate(all_outputs, axis=0).flatten()
@@ -387,7 +379,7 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
     overall_iou = jaccard_score(all_targets_flat, binary_outputs, average='binary', zero_division=0)
     overall_dice = (2 * overall_iou) / (1 + overall_iou) if overall_iou > 0 else 0
 
-    overall_metrics = {
+    metrics_dict["overall_metrics"] = {
         "Average Test Loss": average_loss,
         "AUROC": overall_auroc,
         "AUC": overall_auroc,
@@ -398,13 +390,11 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         "Dice Score": overall_dice
     }
 
-    # Save overall metrics
-    overall_metrics_path = os.path.join(output_folder, "overall_test_metrics.json")
-    with open(overall_metrics_path, "w") as f:
-        json.dump(overall_metrics, f, indent=4)
+    # Save all metrics to a single JSON file
+    metrics_path = os.path.join(output_folder, "test_metrics.json")
+    with open(metrics_path, "w") as f:
+        json.dump(metrics_dict, f, indent=4)
 
-    # Save loss graph
-    save_loss_graph(batch_losses, output_folder, title="Test Loss per Batch", file_name="test_loss.png")
+    print(f"Saved all test metrics in {metrics_path}")
 
-    print(f"Saved individual and overall test metrics to {output_folder}")
 
