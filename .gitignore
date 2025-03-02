@@ -1,5 +1,6 @@
 .DS_Store
 data/covid19-ct-scan-lesion-segmentation-dataset
+data/demo
 data/covid19-ct-scan-lesion-segmentation-dataset.zip
 data/DRIVE
 data/ISIC
@@ -8,5 +9,6 @@ data/medical
 data/animals
 acm/Results
 outputs/results/models/*
+outputs/models/training/*
 outputs/models/*
 **/__pycache__/

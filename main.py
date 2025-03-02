@@ -87,7 +87,7 @@ def main():
             model_name = config["MODEL_NAME"]
             model = load_model(model_folder, model_name)
 
-        elif model is None and config["TRAIN"]:
+        if model is None and config["TRAIN"]:
             print("No model is available to test. ")
 
         criterion = EdgeSegmentationLoss(bce=config["BCE_LOSS"], composite=config["COMPOSITE_LOSS"], iou=config["IOU_LOSS"], dice=config["DICE_LOSS"])

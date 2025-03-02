@@ -25,10 +25,10 @@
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
 
-    "LOAD_MODEL_FOLDER": "outputs/models/pre-trained-test", 
-    "MODEL_NAME": "edge_segmentation_pretrained_model.pth", 
+    "LOAD_MODEL_FOLDER": "outputs/models/20250225_145046", 
+    "MODEL_NAME": "epoch_46.pth", 
 
-    "MODEL_OUTPUT_FOLDER": "outputs/results/models",
+    "MODEL_OUTPUT_FOLDER": "outputs/results/models/training",
     "SAVE_MODEL_FOLDER": "outputs/models",
 
     "ACM_OUTPUT_FOLDER": null
