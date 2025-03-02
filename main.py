@@ -3,15 +3,11 @@ import sys
 import torch
 from torch.utils.data import DataLoader, random_split
 from torch import nn, optim
-import torchvision.transforms as transforms
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
 
 from utils.utils import load_config
 from models.EdgeSegmentationCNN import EdgeSegmentationCNN 
 from models.EdgeSegmentationLoss import EdgeSegmentationLoss 
-from models.utils import save_model, load_model, test_model, train_model, demo_model
+from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model
 from datasets.utils import load_dataset, split_dataset, save_combined_image
 from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 
@@ -38,12 +34,16 @@ def main():
     # Split dataset for training and testing 
     if config["TRAIN"] and config["TEST"]: 
         print(f"{('-' * ((100 - len('SPLIT DATASET') - 2) // 2))} SPLIT DATASET {('-' * ((100 - len('SPLIT DATASET') - 2) // 2))}")
-        train_dataset, test_dataset = split_dataset(data) # splits the dataset 
+        train_dataset, test_dataset = split_dataset(data) # splits the dataset
+
+    # print(len(data), len(train_dataset), len(test_dataset))
+    # sys.exit()
 
     if config["TRAIN"]: 
         print(f"{('-' * ((100 - len('TRAIN') - 2) // 2))} TRAIN {('-' * ((100 - len('TRAIN') - 2) // 2))}")
         if train_dataset is None: 
             train_dataset = data
+        
         train_data = DataLoader(train_dataset, batch_size=config["TRAINING_BATCH_SIZE"], shuffle=True) 
 
         if config["PRETRAINING"]: 
@@ -54,7 +54,7 @@ def main():
                 exit()
             # load pretrained model 
             else: 
-                model = load_model(config["LOAD_MODEL_FOLDER"], config["MODEL_NAME"])
+                model = load_model_pretrained(config["LOAD_MODEL_FOLDER"], config["MODEL_NAME"])
 
                 # Optionally, freeze some layers if you don't want to train the whole model
                 # for param in model.encoder.parameters():  # Example: freezing encoder layers
@@ -64,7 +64,7 @@ def main():
         else: 
             print("Creating new model...")
             # Model Creation
-            model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"])
+            model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"], use_acm=config["ACM"])
         
         # Measures how well the model's predictions match the true labels (used in the backward pass for gradient computation).
         criterion = EdgeSegmentationLoss(bce=config["BCE_LOSS"], composite=config["COMPOSITE_LOSS"], iou=config["IOU_LOSS"], dice=config["DICE_LOSS"])
@@ -90,7 +90,7 @@ def main():
         if model is None and config["TRAIN"]:
             print("No model is available to test. ")
 
-        criterion = EdgeSegmentationLoss()
+        criterion = EdgeSegmentationLoss(bce=config["BCE_LOSS"], composite=config["COMPOSITE_LOSS"], iou=config["IOU_LOSS"], dice=config["DICE_LOSS"])
 
         test_model(model, test_data, model_folder, model_name, criterion) 
 

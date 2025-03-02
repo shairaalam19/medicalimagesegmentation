@@ -6,6 +6,7 @@ from scipy.ndimage import convolve
 import numpy as np
 from PIL import Image  # Import PIL for transformations
 import heapq
+import sys
 
 class EdgeSegmentationDataset(Dataset):
     def __init__(self, input_dir, target_dir, image_size=(1024, 1024), transform=None, dataset_size=None):
@@ -20,6 +21,7 @@ class EdgeSegmentationDataset(Dataset):
         target_files = set(f for f in os.listdir(target_dir) if f.endswith(('.png', '.jpg', '.jpeg')))  
         
         matching_files = [f for f in input_files if f in target_files]
+        #matching_files = [f for f in input_files if any(f.split('.')[0] in t for t in target_files)]
 
         self.data = self.create_dataset(matching_files, dataset_size)
 
@@ -40,9 +42,27 @@ class EdgeSegmentationDataset(Dataset):
             input_image_pil = self.transform(input_image_pil)
             target_mask_pil = self.transform(target_mask_pil)
 
+        input_image_array = np.array(input_image_pil)
+        target_mask_array = np.array(target_mask_pil)
+
+        # print("After transformations: ")
+        # print(input_image_array.shape, target_mask_array.shape) #1, 1024,1024
+        # print('Input image info: ', type(input_image_array), input_image_array.dtype) # <class 'numpy.ndarray'> float32
+        # print('Target mask info: ', type(target_mask_array), target_mask_array.dtype) # <class 'numpy.ndarray'> float32
+        # print(len(np.unique(target_mask_array)), np.min(target_mask_array), np.max(target_mask_array)) # 10, 0.0, 1.0
+        # print(np.min(input_image_array), np.max(input_image_array)) # 0.0 0.92156863
+
+        # We want the target to be a binary mask
+        #target_mask_array = (target_mask_array >= 0.5).astype(np.float32)
+
+        # print('After converting target mask to binary array:')
+        # print(target_mask_array.shape) #1, 1024,1024
+        # print('Target mask info: ', type(target_mask_array), target_mask_array.dtype) # <class 'numpy.ndarray'> float32
+        # print(len(np.unique(target_mask_array)), np.min(target_mask_array), np.max(target_mask_array)) #2 0.0 1.0
+
         # Convert to PyTorch tensors
-        input_tensor = torch.tensor(np.array(input_image_pil), dtype=torch.float32) 
-        target_tensor = torch.tensor(np.array(target_mask_pil), dtype=torch.float32) 
+        input_tensor = torch.tensor(input_image_array, dtype=torch.float32)  
+        target_tensor = torch.tensor(target_mask_array, dtype=torch.float32)  
 
         # print(f"Input tensor min: {input_tensor.min()}, max: {input_tensor.max()}")
         # print(f"Target tensor min: {target_tensor.min()}, max: {target_tensor.max()}")
@@ -63,6 +83,11 @@ class EdgeSegmentationDataset(Dataset):
             input_image = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
             target_mask = cv2.imread(target_path, cv2.IMREAD_GRAYSCALE)
 
+            # print("Original shapes of input and target: ")
+            # print(input_image.shape, target_mask.shape) #512,512
+            # print(len(np.unique(target_mask)), np.min(target_mask), np.max(target_mask)) # 5, 0, 255
+            # print(np.min(input_image), np.max(input_image)) # 12, 255
+
             if input_image is None or target_mask is None:
                 print(f"Skipping {filename}: Failed to load image/mask.")
                 continue
@@ -71,9 +96,21 @@ class EdgeSegmentationDataset(Dataset):
             input_image = cv2.resize(input_image, self.image_size)
             target_mask = cv2.resize(target_mask, self.image_size)
 
+            # print("After resizing of input and target: ")
+            # print(input_image.shape, target_mask.shape) #1024,1024
+            # print(len(np.unique(target_mask)), np.min(target_mask), np.max(target_mask)) # 41, 0, 255
+            # print(np.min(input_image), np.max(input_image)) # 15, 255
+
             # Normalize to [0, 1]
             input_image = input_image.astype(np.float32) / 255.0
             target_mask = target_mask.astype(np.float32) / 255.0
+
+            # print("After normalizing input and target: ")
+            # print(input_image.shape, target_mask.shape) #1024,1024
+            # print('Input image info: ', type(input_image), input_image.dtype) # <class 'numpy.ndarray'> float32
+            # print('Target mask info: ', type(target_mask), target_mask.dtype) # <class 'numpy.ndarray'> float32
+            # print(len(np.unique(target_mask)), np.min(target_mask), np.max(target_mask)) # 41, 0.0, 1.0
+            # print(np.min(input_image), np.max(input_image)) # 0.05882353 1.0
 
             # Convert to PIL format (useful for applying transformations)
             # input_image_pil = Image.fromarray((input_image * 255).astype('uint8'))

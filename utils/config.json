@@ -1,19 +1,19 @@
 {
     "DEMO": false,
-    "PRETRAINING": false,
-    "TRAIN": false,
+    "PRETRAINING": true,
+    "TRAIN": true,
     "TEST": true,
-    "ACM": false,
+    "ACM": true,
     
-    "DEMO_DATASET_SIZE": 4,
+    "DEMO_DATASET_SIZE": 0,
     "MODEL_DATASET_SIZE": 10,
     "TRAINING_BATCH_SIZE": 4,
     "TEST_BATCH_SIZE": 1,
-    "TEST_SPLIT_RATIO": 0.1,
-    "INPUT_DATASET_FOLDER": "data/demo/frames",
-    "TARGET_DATASET_FOLDER": "data/demo/masks",
+    "TEST_SPLIT_RATIO": 0.2,
+    "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/frames",
+    "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/masks",
 
-    "EPOCHS": 155,
+    "EPOCHS": 5,
     "LEARNING_RATE": 0.0001,
 
     "BCE_LOSS": true,

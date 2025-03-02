@@ -115,7 +115,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
         lsah.displayImage(img, "Image", True, save_dir=acm_dir)
         #lsah.AnalyzeCoordinates(os.path.join(acm_dir, "Image.png"))
         lsah.displayImage(gt, "Ground Truth", True, save_dir=acm_dir)
-        init_s_title = 'Initial Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(init_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(init_iou_score)
+        init_s_title = 'Initial Segmentation' + '_' + 'DICE-{0:0.3f}'.format(init_dice_score) + '_' + 'IOU-{0:0.3f}'.format(init_iou_score)
         lsah.displayImage(init_s, init_s_title, True, save_dir=acm_dir)
         
     # ------- Note: AT THIS POINT IMAGE, GROUND TRUTH, AND INITIAL SEGMENTATION SHOULD BE IN A STATE FOR ACM PROCESSING
@@ -146,7 +146,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
     print('Input image size y: ', input_image_size_y)
 
     # --- Call active_contour_layer function and get the final seg output
-    final_seg, final_phi = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
+    final_seg, final_phi, _ = lsa.active_contour_layer(elems=elems, input_image_size=input_image_size_x, input_image_size_2=input_image_size_y, 
                                          nu=nu, mu=mu, iter_limit = iter_lim, acm_dir=acm_dir, freq=save_freq, gt=gt) 
     print('Type of final segmentation mask: ', type(final_seg)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
     print('Shape of final segmentation mask: ', final_seg.shape)
@@ -160,7 +160,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
     # Display of final result
     if(acm_dir):
         # final segmentation
-        final_s_title = 'Final Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(iou_score)
+        final_s_title = 'Final Segmentation' + '_' + 'DICE-{0:0.3f}'.format(dice_score) + '_' + 'IOU-{0:0.3f}'.format(iou_score)
         lsah.displayImage(final_seg, final_s_title, True, acm_dir)
         # final contours
         lsah.displayACMResult(img, initial_phi, final_phi, acm_dir)

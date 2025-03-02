@@ -7,7 +7,6 @@ import json
 from torch.utils.data import DataLoader, random_split
 from torch import nn, optim
 import torch.optim.lr_scheduler as lr_scheduler
-import torchvision.transforms as transforms
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,7 +32,7 @@ def train_model(model, train_loader, criterion, optimizer):
     # Save model file 
     save_file("models/EdgeSegmentationCNN.py", model_folder)
     save_file("utils/config.json", model_folder)
-
+    # torch.autograd.set_detect_anomaly(True)
     # Start training 
     model.train() # enables features liek dropout or batch noramlization 
 
@@ -180,14 +179,32 @@ def save_loss_graph(batch_losses, output_folder, title, file_name):
 # -----------------------------------------------------------
 def load_model(model_path, model_name):
     model_path = os.path.join(model_path, model_name)
-
     print(f"Loading model from: {model_path}")
-
-    # Instantiating model architecture 
-    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"])
-
-    # Loading saved model onto model architecture 
+    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"], use_acm=config["ACM"])
     model.load_state_dict(torch.load(model_path))
+    return model
+
+def load_model_pretrained(model_path, model_name):
+    
+    pretrained_model_path = os.path.join(model_path, model_name)
+    print(f"Loading model information from: {pretrained_model_path}")
+    pretrained_state_dict = torch.load(pretrained_model_path)
+
+    model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"], define_edges_before=config["DEFINE_EDGES_BEFORE"], define_edges_after=config["DEFINE_EDGES_AFTER"], use_acm=config["ACM"]) # Latest architecture
+    #model = EdgeSegmentationCNN(edge_attention=config["EDGE_ATTENTION"]) # Latest architecture
+    # Get the state dict of the current model architecture (ex: with acm layers added)
+    model_state_dict = model.state_dict()
+
+    # Merge weights from the pretrained model
+    merged_state_dict = {}
+    for name, param in model_state_dict.items():
+        if name in pretrained_state_dict and pretrained_state_dict[name].size() == param.size():
+            merged_state_dict[name] = pretrained_state_dict[name]
+        else:
+            merged_state_dict[name] = param  # Keep new layers initialized as they are
+
+    # Load the merged state dict into the model
+    model.load_state_dict(merged_state_dict)
 
     return model
 
