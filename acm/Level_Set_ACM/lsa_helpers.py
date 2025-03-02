@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
+from skimage import img_as_ubyte
 from skimage.filters import gaussian
 from scipy.ndimage import gaussian_filter
 import tensorflow as tf
@@ -167,6 +168,59 @@ def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
     
     plt.close()
 
+def apply_blur_plus_clahe(image, sigma=1, clipLimit=3.0):
+    """
+    Applies Gaussian blurring followed by contrast limited adaptive histogram equalization (CLAHE) to a grayscale image.
+    
+    Parameters:
+        image (np.ndarray): Input grayscale image.
+    
+    Returns:
+        np.ndarray: Processed image.
+    """
+
+    # # Apply Gaussian blur
+    # blurred = gaussian(image, sigma=sigma)
+    
+    # # Convert to uint8 (skimage's gaussian returns float image)
+    # blurred = (blurred * 255).astype(np.uint8)
+    
+    # # Apply CLAHE
+    # clahe = cv2.createCLAHE(clipLimit=clipLimit, tileGridSize=(8, 8))
+    # enhanced = clahe.apply(blurred)
+    
+    # return enhanced
+
+    # Ensure image is float in range [0, 1]
+    image = image.astype(np.float32) / 255.0
+    image = np.clip(image, 0, 1)
+
+    # Apply Gaussian blur
+    blurred = gaussian(image, sigma=sigma)
+
+    # Convert to uint8 safely
+    blurred_uint8 = img_as_ubyte(blurred)
+
+    # Apply CLAHE
+    clahe = cv2.createCLAHE(clipLimit=clipLimit, tileGridSize=(8, 8))
+    enhanced = clahe.apply(blurred_uint8)
+    
+    return enhanced
+
+def DisplayCLAHEResult(image, enhanced_image, save_dir=None):
+    plt.figure(figsize=(10, 4))
+    plt.subplot(1, 2, 1), plt.imshow(image, cmap='gray'), plt.title("Original Image")
+    plt.subplot(1, 2, 2), plt.imshow(enhanced_image, cmap='gray'), plt.title("CLAHE Corrected Image")
+
+    if save_dir:
+        title = "CLAHE Result"
+        save_path = os.path.join(save_dir, f"{title}.png")
+        plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+    else:
+        plt.show()
+    
+    plt.close()
+
 def displayACMScores(iterations, dice_scores, iou_scores, acm_dir):
     
     plt.figure(figsize=(10, 6))
@@ -181,34 +235,6 @@ def displayACMScores(iterations, dice_scores, iou_scores, acm_dir):
 
     # Save the plot
     plt.savefig(os.path.join(acm_dir, 'acm_scores_plot.png'), dpi=300, bbox_inches='tight')
-
-def apply_blur_plus_clahe(image, sigma=1.0, clipLimit=2.0):
-    """
-    Applies Gaussian blurring followed by contrast limited adaptive histogram equalization (CLAHE) to a grayscale image.
-    
-    Parameters:
-        image (np.ndarray): Input grayscale image.
-    
-    Returns:
-        np.ndarray: Processed image.
-    """
-
-    # Note on potential other sigma values:
-    
-    # Note on potential other clipLimit values:
-
-
-    # Apply Gaussian blur
-    blurred = gaussian(image, sigma=sigma)
-    
-    # Convert to uint8 (skimage's gaussian returns float image)
-    blurred = (blurred * 255).astype(np.uint8)
-    
-    # Apply CLAHE
-    clahe = cv2.createCLAHE(clipLimit=clipLimit, tileGridSize=(8, 8))
-    enhanced = clahe.apply(blurred)
-    
-    return enhanced
 
 # ---------- Contour/Segmentation Initializations
 

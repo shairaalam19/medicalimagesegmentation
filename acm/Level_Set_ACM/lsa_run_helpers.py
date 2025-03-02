@@ -13,7 +13,7 @@ import tensorflow as tf
 
 # Helper function that given an image, ground truth, image segmentation and acm properties, 
 #   runs the acm and generates and displays all results.
-def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
+def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, clahe=False, iter_lim=300, save_freq=50, nu = 5.0, mu = 0.2):
 
     if (acm_dir):
         if (not os.path.exists(acm_dir)):
@@ -49,6 +49,13 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, iter_li
         if (acm_dir):
             lsah.DisplayABCResult(img, bias_field, corrected_image, acm_dir)
         img = corrected_image
+
+    if(clahe):
+        # apply contrast limited adaptive histogram equalization
+        enhanced_image = lsah.apply_blur_plus_clahe(img)
+        if(acm_dir):
+            lsah.DisplayCLAHEResult(img, enhanced_image, acm_dir)
+        img = enhanced_image
 
     # Finalizing the ground truth
     if isinstance(ground_truth, str):
