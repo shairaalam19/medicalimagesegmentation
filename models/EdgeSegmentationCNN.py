@@ -48,6 +48,7 @@ class EdgeSegmentationCNN(nn.Module):
         )
 
         if self.use_acm: 
+            print("Using Active Contour Layer")
             self.acm = ActiveContourLayer()
             
             # Output of bottleneck will be like (H_reduced, W_reduced, 64)

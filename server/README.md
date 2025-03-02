@@ -31,8 +31,20 @@ exit
 ```
 
 Reattach to your screen session when you log back in 
+
+Running base attention model: 
+```bash
+screen -r MIS_training_0
+```
+
+Running edge attention model: 
 ```bash
 screen -r MIS_training_1
+```
+
+Running edge attention + ACM (not pretrained) model: 
+```bash
+screen -r MIS_training_2
 ```
 
 ## GPUs 
@@ -42,8 +54,14 @@ Contact if you wish to install system level package.
 Please store all files under the user home folder ~/ , and keep your home folder size under 500GB.
 
 The server is equipped with two A6000 GPUs. If one GPU is in use, you can specify which GPU to use by setting the environment variable in your command, for example:
-- For GPU 0: CUDA_VISIBLE_DEVICES=0 python main.py
-- For GPU 1: CUDA_VISIBLE_DEVICES=1 python main.py
+- For GPU 0: 
+```bash 
+CUDA_VISIBLE_DEVICES=0 python main.py
+```
+- For GPU 1: 
+```bash 
+CUDA_VISIBLE_DEVICES=1 python main.py
+```
 
 ### Check Utilization
 Check utilization of each GPU here: 
