@@ -10,5 +10,4 @@ data/animals
 acm/Results
 outputs/results/models/*
 outputs/models/training/*
-outputs/models/*
 **/__pycache__/

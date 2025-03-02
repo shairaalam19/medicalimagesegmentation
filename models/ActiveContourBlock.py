@@ -4,7 +4,7 @@ import os
 import sys
 
 cwd = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(cwd, '../acm/model_utils')))
+sys.path.append(os.path.abspath(os.path.join(cwd, '../acm')))
 
 from RunLSA import acm_layer
 
