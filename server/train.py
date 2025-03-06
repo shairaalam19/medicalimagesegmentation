@@ -16,8 +16,8 @@ def main():
     config = load_config()
 
     # Load dataset and model paths from config
-    save_model_folder = config["SAVE_MODEL_FOLDER"]  # Where trained models are saved
-    model_output_folder = config["MODEL_OUTPUT_FOLDER"]  # Where test results are stored
+    save_model_folder = config["TRAINED_MODEL_FOLDER"]  # Where trained models are saved
+    model_output_folder = config["TEST_RESULTS_FOLDER"]  # Where test results are stored
 
     os.makedirs(save_model_folder, exist_ok=True)
     os.makedirs(model_output_folder, exist_ok=True)

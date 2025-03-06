@@ -23,16 +23,14 @@ config = load_config()
 # -----------------------------------------------------------
 # Training Function
 # -----------------------------------------------------------
-def train_model(model, train_loader, criterion, optimizer):
+def train_model(model, train_loader, criterion, optimizer, model_folder):
     print("Training model...")
-    # Create a timestamped folder for this training session
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_folder = save_model_folder(timestamp)
-
+    
     # Save model file 
     save_file("models/EdgeSegmentationCNN.py", model_folder)
     save_file("utils/config.json", model_folder)
     # torch.autograd.set_detect_anomaly(True)
+
     # Start training 
     model.train() # enables features liek dropout or batch noramlization 
 
@@ -55,58 +53,66 @@ def train_model(model, train_loader, criterion, optimizer):
     # Apply Gradient Clipping to Prevent Exploding Gradients
     clip_value = 1.0 
 
-    epoch_losses = []
-    last_epoch = None
+    # epoch_losses = []
+    # last_epoch = None
 
-    for epoch in range(config["EPOCHS"]): # iterates through the number of epochs 
-        running_loss = 0.0
-        for inputs, targets, __ in train_loader:
-            optimizer.zero_grad() # clears any previously accumulated gradients (updates based only on current mini batch)
-            
-            # Forward pass
-            outputs = model(inputs) # computes model's current predictions for the given input 
+    # Prepare loss tracking file
+    loss_file_path = os.path.join(model_folder, "epoch_losses.txt")
 
-            # Calculate reconstruction loss (unsupervised learning)
-            loss = criterion(outputs, targets)  # Compare output with the target 
+    # Open file in append mode (to prevent loss in case of shutdown)
+    with open(loss_file_path, "a") as loss_file:
+        for epoch in range(config["EPOCHS"]): # iterates through the number of epochs 
+            running_loss = 0.0
+            for inputs, targets, __ in train_loader:
+                optimizer.zero_grad() # clears any previously accumulated gradients (updates based only on current mini batch)
+                
+                # Forward pass
+                outputs = model(inputs) # computes model's current predictions for the given input 
 
-            # Backward pass and optimization
-            loss.backward() # gradients of the loss wrt model's parameters using back propagation
+                # Calculate reconstruction loss (unsupervised learning)
+                loss = criterion(outputs, targets)  # Compare output with the target 
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_value)  # Apply gradient clipping when weight updates become too large 
+                # Backward pass and optimization
+                loss.backward() # gradients of the loss wrt model's parameters using back propagation
 
-            optimizer.step() # updates model's parameters using calculated gradients (via optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_value)  # Apply gradient clipping when weight updates become too large 
 
-            # Accumulate loss
-            running_loss += loss.item() # loss.item() is scalar loss value of current mini batch (not tensor) and accumulates total loss for epoch 
+                optimizer.step() # updates model's parameters using calculated gradients (via optimizer)
 
-        # Calculate average loss for the epoch
-        epoch_loss = running_loss / len(train_loader)
+                # Accumulate loss
+                running_loss += loss.item() # loss.item() is scalar loss value of current mini batch (not tensor) and accumulates total loss for epoch 
 
-        # Log the loss per epoch
-        print(f"Epoch {epoch + 1}/{config['EPOCHS']}, Loss: {epoch_loss:.4f}")
+            # Calculate average loss for the epoch
+            epoch_loss = running_loss / len(train_loader)
 
-        # Adjust learning rate based on loss
-        scheduler.step(epoch_loss) # based on what the epoch loss is (rate of change)
-        # scheduler.step() # just constant scheduling 
+            # Log the loss per epoch
+            print(f"Epoch {epoch + 1}/{config['EPOCHS']}, Loss: {epoch_loss:.4f}")
 
-        # Early stopping based on training loss
-        if epoch_loss < best_loss - 1e-4:  # Significant improvement
-            best_loss = epoch_loss
-            epochs_no_improve = 0
-        else:
-            epochs_no_improve += 1
+            # Adjust learning rate based on loss
+            scheduler.step(epoch_loss) # based on what the epoch loss is (rate of change)
+            # scheduler.step() # just constant scheduling 
 
-        last_epoch = epoch
-        epoch_losses.append(epoch_loss)  # Store the loss for plotting
+            # Early stopping based on training loss
+            if epoch_loss < best_loss - 1e-4:  # Significant improvement
+                best_loss = epoch_loss
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
 
-        learning_rate = scheduler.get_last_lr()
-        print(f"Learning rate after epoch {epoch}: {learning_rate}")
+            last_epoch = epoch
 
-        save_model(model, f"epoch_{epoch + 1}", model_folder)
+            learning_rate = scheduler.get_last_lr()
+            print(f"Learning rate after epoch {epoch + 1}: {learning_rate}")
 
-        if epochs_no_improve >= early_stop_patience:
-            print(f"Early stopping triggered at epoch {epoch + 1}. Training stopped.")
-            break
+            # Save the epoch loss to the file after each epoch
+            loss_file.write(f"Epoch: {epoch + 1}, Loss: {epoch_loss:.6f}, Learning Rate: {learning_rate}\n")
+            loss_file.flush()  # Ensure data is written immediately
+
+            save_model(model, f"epoch_{epoch + 1}", model_folder)
+
+            if epochs_no_improve >= early_stop_patience:
+                print(f"Early stopping triggered at epoch {epoch + 1}. Training stopped.")
+                break
 
     print("Training complete!")
 
@@ -118,7 +124,7 @@ def train_model(model, train_loader, criterion, optimizer):
         print("No valid epoch found. Model not saved.")
         return None, None
 
-    save_loss_graph(epoch_losses, model_folder, title="Training Loss per Batch", file_name="training_loss.png")
+    save_loss_graph(loss_file_path, model_folder, title="Training Loss per Batch")
 
     return model_folder, model_name
 
@@ -149,34 +155,34 @@ def save_file(file, folder_path):
         print(f"Warning: {file} not found. Skipping model script backup.")
 
 # -----------------------------------------------------------
-# Save Model Folder Function
-# -----------------------------------------------------------
-def save_model_folder(folder_name):
-    # Generates folder with folder name 
-    folder_path = os.path.join(config["SAVE_MODEL_FOLDER"], folder_name)
-    os.makedirs(folder_path, exist_ok=True)
-
-    print(f"Created training session folder: {folder_path}")
-
-    return folder_path
-
-# -----------------------------------------------------------
 # Save Loss Graph Function
 # -----------------------------------------------------------
-def save_loss_graph(batch_losses, output_folder, title, file_name):
-    """Save the graph of loss vs. batches."""
-    plt.figure(figsize=(8, 6))
-    plt.plot(range(1, len(batch_losses) + 1), batch_losses, marker='o', label="Loss")
+def save_loss_graph(loss_file_path, output_folder, title):
+    # Read epoch losses from the file
+    epochs = []
+    losses = []
+    
+    with open(loss_file_path, "r") as file:
+        for line in file:
+            epoch, loss = line.strip().split(",")
+            epochs.append(int(epoch))
+            losses.append(float(loss))
+
+    # Plot loss curve
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, losses, marker="o", linestyle="-", color="b", label="Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.title(title)
     plt.legend()
     plt.grid(True)
-    loss_graph_path = os.path.join(output_folder, file_name)
-    plt.savefig(loss_graph_path)
-    plt.close()
-    print(f"Loss graph saved at {loss_graph_path}")
 
+    # Save plot
+    output_path = os.path.join(output_folder, title)
+    plt.savefig(output_path)
+    plt.close()
+
+    print(f"Loss graph saved at: {output_path}")
 # -----------------------------------------------------------
 # Load Model Function
 # -----------------------------------------------------------
@@ -219,8 +225,8 @@ def test_model(model, test_loader, model_path, model_name, criterion):
     timestamp = os.path.basename(model_path)
     epoch = model_name.split(".")[0]  # Extract the epoch number (e.g., epoch_20)
 
-    # Create output folder structure: config["MODEL_OUTPUT_FOLDER"]/{timestamp}/epoch_{}
-    output_folder = os.path.join(config["MODEL_OUTPUT_FOLDER"], timestamp, f"{epoch}")
+    # Create output folder structure: config["TEST_RESULTS_FOLDER"]/{timestamp}/epoch_{}
+    output_folder = os.path.join(config["TEST_RESULTS_FOLDER"], timestamp, f"{epoch}")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 

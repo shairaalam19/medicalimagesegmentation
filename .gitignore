@@ -1,4 +1,5 @@
 .DS_Store
+data/*
 data/covid19-ct-scan-lesion-segmentation-dataset
 data/demo
 data/covid19-ct-scan-lesion-segmentation-dataset.zip

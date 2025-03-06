@@ -1,6 +1,9 @@
 import os
+import shutil
+import random
 import sys
 import torch
+import datetime
 from torch.utils.data import DataLoader, random_split
 from torch import nn, optim
 import torchvision.transforms as transforms
@@ -49,12 +52,58 @@ def load_dataset(input_folder_path, target_folder_path, dataset_size=None):
     print(f"Loaded {len(dataset)} images from dataset.")
     return dataset
 
-def split_dataset(dataset):
+def split_dataset(dataset, folder_path):
     train_size = ceil(len(dataset) * (1 - config["TEST_SPLIT_RATIO"]))
     test_size = len(dataset) - train_size  # Ensure sizes sum to total
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+
     print(f"Training set size: {len(train_dataset)}, Test set size: {len(test_dataset)}")
+
+    test_file_path = os.path.join(folder_path, "test_dataset.txt")
+
+    with open(test_file_path, "w") as file:
+        for idx in test_dataset.indices:
+            _, _, filename = dataset.data[idx]  # Extract filename correctly
+            file.write(f"{filename}\n")
+
+    print(f"Test file list saved to {test_file_path}")
+
     return train_dataset, test_dataset
+
+def save_split_dataset(input_dataset_path, target_dataset_path, train_input_dir, train_target_dir, test_input_dir, test_target_dir, train_ratio=0.8):
+    # Define output directories
+    # train_input_dir = os.path.join(output_path, "train/input")
+    # train_target_dir = os.path.join(output_path, "train/target")
+    # test_input_dir = os.path.join(output_path, "test/input")
+    # test_target_dir = os.path.join(output_path, "test/target")
+
+    # Create directories if they don't exist
+    for directory in [train_input_dir, train_target_dir, test_input_dir, test_target_dir]:
+        os.makedirs(directory, exist_ok=True)
+
+    # Get all input file names
+    input_files = sorted(os.listdir(input_dataset_path))
+    target_files = sorted(os.listdir(target_dataset_path))
+    
+    # Ensure input and target files match
+    assert input_files == target_files, "Mismatch between input and target files"
+    
+    # Shuffle and split dataset
+    random.shuffle(input_files)
+    split_idx = int(len(input_files) * train_ratio)
+    train_files = input_files[:split_idx]
+    test_files = input_files[split_idx:]
+
+    # Move files to respective directories
+    for file in train_files:
+        shutil.copy(os.path.join(input_dataset_path, file), os.path.join(train_input_dir, file))
+        shutil.copy(os.path.join(target_dataset_path, file), os.path.join(train_target_dir, file))
+    
+    for file in test_files:
+        shutil.copy(os.path.join(input_dataset_path, file), os.path.join(test_input_dir, file))
+        shutil.copy(os.path.join(target_dataset_path, file), os.path.join(test_target_dir, file))
+    
+    print(f"Dataset split completed. Train: {len(train_files)}, Test: {len(test_files)}")
 
 # -----------------------------------------------------------
 # Save Before and After Images
@@ -78,3 +127,18 @@ def save_combined_image(original, output, target, filename):
 
     combined_image = np.concatenate((original, output, target), axis=1)
     plt.imsave(filename, combined_image.squeeze(), cmap='gray')
+
+# -----------------------------------------------------------
+# Save Model Folder Function
+# -----------------------------------------------------------
+def create_folder(folder_name):
+    # Create a timestamped folder for this training session
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Generates folder with folder name 
+    folder_path = os.path.join(folder_name, timestamp)
+    os.makedirs(folder_path, exist_ok=True)
+
+    print(f"Created training session folder: {folder_path}")
+
+    return folder_path

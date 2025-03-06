@@ -8,7 +8,7 @@ from utils.utils import load_config
 from models.EdgeSegmentationCNN import EdgeSegmentationCNN 
 from models.EdgeSegmentationLoss import EdgeSegmentationLoss 
 from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model
-from datasets.utils import load_dataset, split_dataset, save_combined_image
+from datasets.utils import load_dataset, split_dataset, save_combined_image, create_folder, save_split_dataset
 from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 
 # -----------------------------------------------------------
@@ -17,6 +17,9 @@ from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 def main():
     # Load Configurations
     config = load_config()
+
+    if config["SAVE_TEST_SPLIT"]: 
+        save_split_dataset(config["INPUT_DATASET_FOLDER"], config["TARGET_DATASET_FOLDER"], config["TRAIN_INPUT_DATASET"], config["TRAIN_TARGET_DATASET"], config["TEST_INPUT_DATASET"], config["TEST_TARGET_DATASET"], 1-config["TEST_SPLIT_RATIO"])
 
     if config["DEMO"]: 
         print(f"{('-' * ((100 - len('DEMO') - 2) // 2))} DEMO {('-' * ((100 - len('DEMO') - 2) // 2))}")
@@ -27,22 +30,25 @@ def main():
     model, model_folder, model_name, train_dataset, test_dataset, target_dataset = None, None, None, None, None, None
 
     # Load dataset 
-    if config["TRAIN"] or config["TEST"]: 
-        print(f"{('-' * ((100 - len('LOAD DATASET') - 2) // 2))} LOAD DATASET {('-' * ((100 - len('LOAD DATASET') - 2) // 2))}")
-        data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["MODEL_DATASET_SIZE"])
+    # if config["TRAIN"] or config["TEST"]: 
+    #     print(f"{('-' * ((100 - len('LOAD DATASET') - 2) // 2))} LOAD DATASET {('-' * ((100 - len('LOAD DATASET') - 2) // 2))}")
+    #     data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["MODEL_DATASET_SIZE"])
     
-    # Split dataset for training and testing 
-    if config["TRAIN"] and config["TEST"]: 
-        print(f"{('-' * ((100 - len('SPLIT DATASET') - 2) // 2))} SPLIT DATASET {('-' * ((100 - len('SPLIT DATASET') - 2) // 2))}")
-        train_dataset, test_dataset = split_dataset(data) # splits the dataset
-
-    # print(len(data), len(train_dataset), len(test_dataset))
-    # sys.exit()
+    # Split dataset for training and testing for random train/test
+    # if config["TRAIN"] and config["TEST"]: 
+        # print(f"{('-' * ((100 - len('SPLIT DATASET') - 2) // 2))} SPLIT DATASET {('-' * ((100 - len('SPLIT DATASET') - 2) // 2))}")
+        # model_folder = create_folder(config["TRAINED_MODEL_FOLDER"])
+        # train_dataset, test_dataset = split_dataset(data, model_folder) # splits the dataset
 
     if config["TRAIN"]: 
         print(f"{('-' * ((100 - len('TRAIN') - 2) // 2))} TRAIN {('-' * ((100 - len('TRAIN') - 2) // 2))}")
-        if train_dataset is None: 
-            train_dataset = data
+        
+        model_folder = create_folder(config["TRAINED_MODEL_FOLDER"])
+
+        # if train_dataset is None: 
+        #     train_dataset = data
+
+        train_dataset = load_dataset(input_folder_path=config["TRAIN_INPUT_DATASET"], target_folder_path=config["TRAIN_TARGET_DATASET"], dataset_size=None)
         
         train_data = DataLoader(train_dataset, batch_size=config["TRAINING_BATCH_SIZE"], shuffle=True) 
 
@@ -73,12 +79,16 @@ def main():
         optimizer = optim.Adam(model.parameters(), lr=config["LEARNING_RATE"]) # model.parameters are the parameters of the model and lr is the step size of learning
 
         # Fine-tuning / Training the model on the new dataset
-        model_folder, model_name = train_model(model, train_data, criterion, optimizer)
+        model_folder, model_name = train_model(model, train_data, criterion, optimizer, model_folder)
         
     if config["TEST"]: 
         print(f"{('-' * ((100 - len('TEST') - 2) // 2))} TEST {('-' * ((100 - len('TEST') - 2) // 2))}")
-        if test_dataset is None: 
-            test_dataset = data
+        
+        # if test_dataset is None: 
+        #     test_dataset = data
+
+        test_dataset = load_dataset(input_folder_path=config["TEST_INPUT_DATASET"], target_folder_path=config["TEST_TARGET_DATASET"], dataset_size=None)
+
         test_data = DataLoader(test_dataset, batch_size=config["TEST_BATCH_SIZE"])
 
         # Load Model

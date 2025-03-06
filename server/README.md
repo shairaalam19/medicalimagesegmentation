@@ -47,6 +47,21 @@ Running edge attention + ACM (not pretrained) model:
 screen -r MIS_training_2
 ```
 
+Running base attention model with higher learning rate: 
+```bash
+screen -r base_cnn
+```
+
+Running edge attention model with higher learning rate: 
+```bash
+screen -r edge_cnn
+```
+
+Running edge attention + ACM model with higher learning rate: 
+```bash
+screen -r acm_cnn
+```
+
 ## GPUs 
 Message from Zhi: 
 Contact if you wish to install system level package.
