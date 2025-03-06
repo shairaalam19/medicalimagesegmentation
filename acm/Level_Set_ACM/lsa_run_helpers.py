@@ -194,7 +194,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, clahe=F
 
     return result
 
-def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim=300, save_freq=50, nu = 100, mu = 1):
+def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, clahe=False, iter_lim=300, save_freq=50, nu = 100, mu = 1):
     # running the chan vese algorithm which is a region based level set acm.
     if (acm_dir):
         if (not os.path.exists(acm_dir)):
@@ -230,6 +230,13 @@ def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim
         if (acm_dir):
             lsah.DisplayABCResult(img, bias_field, corrected_image, acm_dir)
         img = corrected_image
+
+    if(clahe):
+        # apply contrast limited adaptive histogram equalization
+        enhanced_image = lsah.apply_blur_plus_clahe(img)
+        if(acm_dir):
+            lsah.DisplayCLAHEResult(img, enhanced_image, acm_dir)
+        img = enhanced_image
 
     # Now, once the image is finalized, convert it to floating point for better cv calculations
     img = img.astype(np.float64)
@@ -297,12 +304,16 @@ def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim
         # Ground truth
         lsah.displayImage(gt, "Ground Truth", True, save_dir=acm_dir)
         # Initial segmentation
-        init_s_title = 'Initial Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(init_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(init_iou_score)
+        init_s_title = 'Initial-Segmentation' + '_' + 'DICE-{0:0.3f}'.format(init_dice_score) + '_' + 'IOU-{0:0.3f}'.format(init_iou_score)
         lsah.displayImage(init_seg, init_s_title, True, save_dir=acm_dir)
         # Initial contour
         lsah.displayLSF(img, init_lsf, acm_dir, "_initial")
     
     # Chan Vese ACM processing
+
+    dice_scores = [init_dice_score]
+    iou_scores = [init_iou_score]
+    iterations = [0]
 
     # defining constants
     # mu, nu, and num_iter come from input/default
@@ -312,20 +323,23 @@ def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim
 
     for i in range(iter_lim):
         LSF = CV.CV(LSF, img, mu, nu, eps, step)
-        if i % save_freq == 0:
+        if ((i+1) % save_freq) == 0:
 
             # Calculate the intermediate dice and iou values
             intm_seg_mask = tf.round(tf.cast((1 - tf.nn.sigmoid(LSF)), dtype=tf.float32))
             intm_dice_score = lsah.dice_score(intm_seg_mask, gt)
             intm_iou_score = lsah.iou_score(intm_seg_mask, gt)
-            print(f'Dice score at iteration {i}: {intm_dice_score}')
-            print(f'IOU score at iteration {i}: {intm_iou_score}')
+            print(f'Dice score at iteration {i+1}: {intm_dice_score}')
+            print(f'IOU score at iteration {i+1}: {intm_iou_score}')
+            iterations.append(i+1)
+            dice_scores.append(intm_dice_score)
+            iou_scores.append(intm_iou_score)
 
             if(acm_dir):
                 # Display contour
-                lsah.displayLSF(img, LSF, acm_dir, f'_iteration_{i}')
+                lsah.displayLSF(img, LSF, acm_dir, f'_iteration_{i+1}')
                 # Display segmentation
-                intm_seg_title = 'Mask ' + str(i) + ' - ' + 'DICE:{0:0.3f}'.format(intm_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(intm_iou_score)
+                intm_seg_title = 'Mask-' + str(i+1) + '_' + 'DICE-{0:0.3f}'.format(intm_dice_score) + '_' + 'IOU-{0:0.3f}'.format(intm_iou_score)
                 lsah.displayImage(intm_seg_mask, intm_seg_title, True, save_dir=acm_dir)
             
     # final evaluations scores
@@ -334,13 +348,19 @@ def run_cv(image, ground_truth, init_lsf=None, acm_dir=None, abc=False, iter_lim
     final_iou_score = lsah.iou_score(final_seg_mask, gt)
     print(f'Final Dice score: {final_dice_score}')
     print(f'Final IOU score: {final_iou_score}')
+    iterations.append(iter_lim)
+    dice_scores.append(final_dice_score)
+    iou_scores.append(final_iou_score)
+
     
     if(acm_dir):
         # final segmentation
-        final_s_title = 'Final Segmentation' + ' - ' + 'DICE:{0:0.3f}'.format(final_dice_score) + ' - ' + 'IOU:{0:0.3f}'.format(final_iou_score)
+        final_s_title = 'Final-Segmentation' + '_' + 'DICE-{0:0.3f}'.format(final_dice_score) + '_' + 'IOU-{0:0.3f}'.format(final_iou_score)
         lsah.displayImage(final_seg_mask, final_s_title, True, acm_dir)
         # acm evolution
         lsah.displayACMResult(img, init_lsf, LSF, acm_dir)
+        # plotting a graph of dice and iou losses
+        lsah.displayACMScores(iterations, dice_scores, iou_scores, acm_dir)
     
     # Fill result dictionary with important info and return
     result = {}

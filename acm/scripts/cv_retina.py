@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(cwd, '../Level_Set_ACM')))
 import lsa_run_helpers as lsarh
 
 # Paths
-image_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L.jpg')) # (960, 999)
-gt_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L_1stHO.png'))
+image_path = os.path.abspath(os.path.join(cwd, '../../data/chase_db1/Image_01L.jpg')) # (960, 999)
+gt_path = os.path.abspath(os.path.join(cwd, '../../data/chase_db1/Image_01L_1stHO.png'))
 #acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Retina'))
 acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Retina/abc/new_lsf'))
 
