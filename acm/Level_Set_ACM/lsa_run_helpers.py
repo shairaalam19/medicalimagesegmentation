@@ -41,7 +41,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, clahe=F
         sys.exit()
 
     print('Shape of the image: ', img.shape)
-    print('min and max intensity values of image: ', np.min(img), np.max(img))
+    print('min and max intensity values of image: ', np.min(img), np.max(img)) # Between 0 and 255 but float
 
     if(abc):
         # apply additive bias correction
@@ -83,7 +83,7 @@ def run_lsa(image, ground_truth, init_seg=None, acm_dir=None, abc=False, clahe=F
         center_row, center_col, radius_max = lsah.GetDefaultInitContourParams(img.shape)
         print('Initial contour parameters: ', center_row, center_col, radius_max)
         init_seg = lsah.create_circular_mask(img.shape, (center_row, center_col), radius_max // 2)
-        #init_seg = 0.25 + 0.5 * init_seg - for testing if 0.25/0.75 initial split is better than 0/1
+        #init_seg = 0.25 + 0.5 * init_seg #for testing if 0.25/0.75 initial split is better than 0/1
         # The above was used for 'Results/DALS_LSA/Skin/new_pm' result
 
     if (isinstance(init_seg, str)):

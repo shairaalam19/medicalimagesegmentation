@@ -7,6 +7,7 @@ from skimage import img_as_ubyte
 from skimage.filters import gaussian
 from scipy.ndimage import gaussian_filter
 import tensorflow as tf
+import sys
 
 # ---------------------------- Helper functions for working with level set acms -----------------------------------
 
@@ -151,6 +152,8 @@ def apply_ABC(image, sigma=50):
     corrected_image = (corrected_image - corrected_image.min()) / (corrected_image.max() - corrected_image.min()) * 255
     corrected_image = corrected_image.astype(np.uint8)
 
+    # Returned image is also 0 and 255 but in uint8
+
     return corrected_image, bias_field
 
 def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
@@ -168,7 +171,7 @@ def DisplayABCResult(image, bias_field, corrected_image, save_dir=None):
     
     plt.close()
 
-def apply_blur_plus_clahe(image, sigma=1, clipLimit=3.0):
+def apply_blur_plus_clahe(image, sigma=1, clipLimit=2.0):
     """
     Applies Gaussian blurring followed by contrast limited adaptive histogram equalization (CLAHE) to a grayscale image.
     
@@ -204,6 +207,8 @@ def apply_blur_plus_clahe(image, sigma=1, clipLimit=3.0):
     # Apply CLAHE
     clahe = cv2.createCLAHE(clipLimit=clipLimit, tileGridSize=(8, 8))
     enhanced = clahe.apply(blurred_uint8)
+
+    # between 0 and 255 but integers
     
     return enhanced
 

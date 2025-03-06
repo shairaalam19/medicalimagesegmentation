@@ -15,6 +15,8 @@ import lsa_run_helpers as lsarh
 # Paths
 image_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L.jpg'))
 gt_path = os.path.abspath(os.path.join(cwd, '../../dataset/chase_db1/Image_01L_1stHO.png'))
+
+
 #acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/Retina'))
 acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/Retina/abc'))
 

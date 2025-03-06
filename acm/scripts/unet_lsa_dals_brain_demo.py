@@ -23,8 +23,8 @@ init_seg_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_inits
 # acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour/abc'))
 # result = lsarh.run_lsa(image_path, gt_path, init_seg=init_seg_path, acm_dir=acm_dir, abc=True, iter_lim=600)
 
-# acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour/clahe'))
-# result = lsarh.run_lsa(image_path, gt_path, init_seg=init_seg_path, acm_dir=acm_dir, clahe=True, iter_lim=600)
+acm_dir = os.path.abspath(os.path.join(cwd, '../Results/DALS_LSA/brain/unet_init_contour/clahe_exp'))
+result = lsarh.run_lsa(image_path, gt_path, init_seg=init_seg_path, acm_dir=acm_dir, clahe=True, iter_lim=600)
 
 # ----- Testing non-square input version [expect identical results]
 if(False):

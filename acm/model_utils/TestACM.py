@@ -24,9 +24,9 @@ use_torch = True
 print('Testing Model ACM for Original Brain Demo')
 print()
 
-image_path = os.path.abspath(os.path.join(cwd, '../acm/dals_demo_brain/img1_input.npy'))
-gt_path = os.path.abspath(os.path.join(cwd, '../acm/dals_demo_brain/img1_label.npy'))
-init_seg_path = os.path.abspath(os.path.join(cwd, '../acm/dals_demo_brain/img1_initseg.npy'))
+image_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_input.npy'))
+gt_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_label.npy'))
+init_seg_path = os.path.abspath(os.path.join(cwd, '../dals_demo_brain/img1_initseg.npy'))
 
 img = np.load(image_path)
 gt = lsah.normalize_mask(np.load(gt_path))
