@@ -1,11 +1,12 @@
 {
-    "DEMO": false,
+    "DEMO": true,
     "PRETRAINING": false,
-    "TRAIN": true,
-    "TEST": true,
+    "TRAIN": false,
+    "TEST": false,
     
-    "DEMO_DATASET_SIZE": 0,
-    "MODEL_DATASET_SIZE": null,
+    "DEMO_DATASET_SIZE": 5,
+    "TRAIN_DATASET_SIZE": 1000,
+    "TEST_DATASET_SIZE": 20,
     "TRAINING_BATCH_SIZE": 4,
     "TEST_BATCH_SIZE": 1,
     
@@ -19,23 +20,27 @@
     "TEST_INPUT_DATASET": "data/test/input",
     "TEST_TARGET_DATASET": "data/test/target",
 
-    "EPOCHS": 50,
+    "EPOCHS": 10,
     "LEARNING_RATE": 0.001,
+    "PATIENCE": 7,
 
     "BCE_LOSS": true,
     "COMPOSITE_LOSS": false,
     "IOU_LOSS": false,
     "DICE_LOSS": false,
 
+    "GET_TRAINING_LOSS_GRAPH": false,
+    "LOSS_FILE_PATH": "",
+
     "EDGE_ATTENTION": true,
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
-    "ACM": false,
+    "ACM": true,
 
     "TRAINED_MODEL_FOLDER": "outputs/models/training",
 
     "TEST_RESULTS_FOLDER": "outputs/results/models/training",
 
-    "LOAD_MODEL_FOLDER": "", 
-    "MODEL_NAME": ""
+    "LOAD_MODEL_FOLDER": "outputs/models/training/20250305_231713", 
+    "MODEL_NAME": "epoch_10.pth"
 }

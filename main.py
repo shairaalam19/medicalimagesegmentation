@@ -7,7 +7,7 @@ from torch import nn, optim
 from utils.utils import load_config
 from models.EdgeSegmentationCNN import EdgeSegmentationCNN 
 from models.EdgeSegmentationLoss import EdgeSegmentationLoss 
-from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model
+from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model, save_loss_graph
 from datasets.utils import load_dataset, split_dataset, save_combined_image, create_folder, save_split_dataset
 from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 
@@ -29,17 +29,6 @@ def main():
 
     model, model_folder, model_name, train_dataset, test_dataset, target_dataset = None, None, None, None, None, None
 
-    # Load dataset 
-    # if config["TRAIN"] or config["TEST"]: 
-    #     print(f"{('-' * ((100 - len('LOAD DATASET') - 2) // 2))} LOAD DATASET {('-' * ((100 - len('LOAD DATASET') - 2) // 2))}")
-    #     data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["MODEL_DATASET_SIZE"])
-    
-    # Split dataset for training and testing for random train/test
-    # if config["TRAIN"] and config["TEST"]: 
-        # print(f"{('-' * ((100 - len('SPLIT DATASET') - 2) // 2))} SPLIT DATASET {('-' * ((100 - len('SPLIT DATASET') - 2) // 2))}")
-        # model_folder = create_folder(config["TRAINED_MODEL_FOLDER"])
-        # train_dataset, test_dataset = split_dataset(data, model_folder) # splits the dataset
-
     if config["TRAIN"]: 
         print(f"{('-' * ((100 - len('TRAIN') - 2) // 2))} TRAIN {('-' * ((100 - len('TRAIN') - 2) // 2))}")
         
@@ -48,7 +37,7 @@ def main():
         # if train_dataset is None: 
         #     train_dataset = data
 
-        train_dataset = load_dataset(input_folder_path=config["TRAIN_INPUT_DATASET"], target_folder_path=config["TRAIN_TARGET_DATASET"], dataset_size=None)
+        train_dataset = load_dataset(input_folder_path=config["TRAIN_INPUT_DATASET"], target_folder_path=config["TRAIN_TARGET_DATASET"], dataset_size=config["TRAIN_DATASET_SIZE"])
         
         train_data = DataLoader(train_dataset, batch_size=config["TRAINING_BATCH_SIZE"], shuffle=True) 
 
@@ -80,6 +69,17 @@ def main():
 
         # Fine-tuning / Training the model on the new dataset
         model_folder, model_name = train_model(model, train_data, criterion, optimizer, model_folder)
+
+        loss_file_path = os.path.join(model_folder, "epoch_losses.txt")
+
+        save_loss_graph(loss_file_path, model_folder, title="Training Loss per Batch")
+
+    if config["GET_TRAINING_LOSS_GRAPH"]: 
+        model_folder = config["LOSS_FILE_PATH"]
+
+        loss_file_path = os.path.join(model_folder, "epoch_losses.txt")
+
+        save_loss_graph(loss_file_path, model_folder, title="Training Loss per Batch")
         
     if config["TEST"]: 
         print(f"{('-' * ((100 - len('TEST') - 2) // 2))} TEST {('-' * ((100 - len('TEST') - 2) // 2))}")
@@ -87,7 +87,7 @@ def main():
         # if test_dataset is None: 
         #     test_dataset = data
 
-        test_dataset = load_dataset(input_folder_path=config["TEST_INPUT_DATASET"], target_folder_path=config["TEST_TARGET_DATASET"], dataset_size=None)
+        test_dataset = load_dataset(input_folder_path=config["TEST_INPUT_DATASET"], target_folder_path=config["TEST_TARGET_DATASET"], dataset_size=config["TEST_DATASET_SIZE"])
 
         test_data = DataLoader(test_dataset, batch_size=config["TEST_BATCH_SIZE"])
 
@@ -103,6 +103,6 @@ def main():
         criterion = EdgeSegmentationLoss(bce=config["BCE_LOSS"], composite=config["COMPOSITE_LOSS"], iou=config["IOU_LOSS"], dice=config["DICE_LOSS"])
 
         test_model(model, test_data, model_folder, model_name, criterion) 
-
+    
 if __name__ == "__main__":
     main()

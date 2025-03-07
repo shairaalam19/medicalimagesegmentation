@@ -42,7 +42,7 @@ Running edge attention model:
 screen -r MIS_training_1
 ```
 
-Running edge attention + ACM (not pretrained) model: 
+Running edge attention + ACM model: 
 ```bash
 screen -r MIS_training_2
 ```

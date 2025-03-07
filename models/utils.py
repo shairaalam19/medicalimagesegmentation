@@ -4,6 +4,7 @@ import torch
 import datetime
 import shutil
 import json
+import re
 from torch.utils.data import DataLoader, random_split
 from torch import nn, optim
 import torch.optim.lr_scheduler as lr_scheduler
@@ -46,7 +47,7 @@ def train_model(model, train_loader, criterion, optimizer, model_folder):
     # scheduler = lr_scheduler.ExponentialLR(optimizer, gamma=0.9)  # Reduce LR by 10% every epoch
 
     # Early Stopping Parameters
-    early_stop_patience = 7  # Stop if no significant improvement in 7 epochs
+    early_stop_patience = config["PATIENCE"]  # Stop if no significant improvement in 7 epochs
     best_loss = float('inf')
     epochs_no_improve = 0
 
@@ -124,8 +125,6 @@ def train_model(model, train_loader, criterion, optimizer, model_folder):
         print("No valid epoch found. Model not saved.")
         return None, None
 
-    save_loss_graph(loss_file_path, model_folder, title="Training Loss per Batch")
-
     return model_folder, model_name
 
 # -----------------------------------------------------------
@@ -164,9 +163,12 @@ def save_loss_graph(loss_file_path, output_folder, title):
     
     with open(loss_file_path, "r") as file:
         for line in file:
-            epoch, loss = line.strip().split(",")
-            epochs.append(int(epoch))
-            losses.append(float(loss))
+            match = re.search(r"Epoch: (\d+), Loss: ([\d\.]+)", line)
+            if match:
+                epoch = int(match.group(1))
+                loss = float(match.group(2))
+                epochs.append(epoch)
+                losses.append(loss)
 
     # Plot loss curve
     plt.figure(figsize=(8, 5))
@@ -282,6 +284,9 @@ def demo_model(demo_loader):
     print("Demoing model...")
 
     for input, target, file_name in demo_loader:
+        # Ensure input is a tensor and rename it to image for clarity
+        image = input  # Assign input to image
+        
         # Ensure image is a tensor
         image = image.unsqueeze(0) if image.ndimension() == 3 else image  # Add batch dimension if necessary
 

@@ -114,6 +114,20 @@ def save_combined_image(original, output, target, filename):
     # if len(output.shape) == 4:
     #     output = output.squeeze(0)
 
+    # original = original.cpu().detach().numpy()
+    # output = output.cpu().detach().numpy()
+    # target = target.cpu().detach().numpy()
+
+    # if len(original.shape) == 2:
+    #     original = original[:, :, np.newaxis]
+    # if len(output.shape) == 2:
+    #     output = output[:, :, np.newaxis]
+    # if len(target.shape) == 2:
+    #     target = target[:, :, np.newaxis]
+
+    # combined_image = np.concatenate((original, output, target), axis=1)
+    # plt.imsave(filename, combined_image.squeeze(), cmap='gray')
+
     original = original.cpu().detach().numpy()
     output = output.cpu().detach().numpy()
     target = target.cpu().detach().numpy()
@@ -125,8 +139,19 @@ def save_combined_image(original, output, target, filename):
     if len(target.shape) == 2:
         target = target[:, :, np.newaxis]
 
-    combined_image = np.concatenate((original, output, target), axis=1)
-    plt.imsave(filename, combined_image.squeeze(), cmap='gray')
+    images = [original, output, target]
+    titles = ["(1) Input", "(2) Model Output Image", "(3) Target Image"]
+
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+
+    for ax, img, title in zip(axes, images, titles):
+        ax.imshow(img.squeeze(), cmap='gray')
+        ax.set_title(title)
+        ax.axis('off')
+
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight', dpi=300)
+    plt.close()
 
 # -----------------------------------------------------------
 # Save Model Folder Function
