@@ -25,7 +25,7 @@ def main():
         print(f"{('-' * ((100 - len('DEMO') - 2) // 2))} DEMO {('-' * ((100 - len('DEMO') - 2) // 2))}")
         # Preprocess 
         data = load_dataset(input_folder_path=config["INPUT_DATASET_FOLDER"], target_folder_path=config["TARGET_DATASET_FOLDER"], dataset_size=config["DEMO_DATASET_SIZE"]) # Creates a dataset class that contains the preprocessed dataset
-        demo_model(data)
+        demo_model(data, config["DEMO_RESULTS_FOLDER"])
 
     model, model_folder, model_name, train_dataset, test_dataset, target_dataset = None, None, None, None, None, None
 

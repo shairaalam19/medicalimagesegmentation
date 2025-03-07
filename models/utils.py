@@ -268,61 +268,72 @@ def test_model(model, test_loader, model_path, model_name, criterion):
             for j, file_name in enumerate(file_names):
                 original_filename = os.path.basename(file_name)
                 output_filename = os.path.join(output_folder, f"{original_filename}")
+
+                # fix this output to print the binary mask 
+                # output = all_outputs[idx].flatten()  # Model outputs (probabilities)
+                # binary_output = (output > threshold).astype(int)  # Convert to binary mask
                 save_combined_image(inputs[j], outputs[j], targets[j], output_filename)
     
     # Calculate average loss
     average_loss = total_loss / len(test_loader)
 
+    # Threshold the outputs so it can turn it into a mask 
+
     compute_metrics(all_targets=all_targets, all_outputs=all_outputs, all_file_names=all_file_names, batch_losses=batch_losses, average_loss=average_loss, output_folder=output_folder)
 
     print(f"Testing complete! Images saved to {output_folder}.")
 
+
 # -----------------------------------------------------------
 # Demo Function
 # -----------------------------------------------------------
-def demo_model(demo_loader): 
+def demo_model(demo_loader, output_folder): 
     print("Demoing model...")
+
+    # Ensure the output directory exists
+    os.makedirs(output_folder, exist_ok=True)
 
     for input, target, file_name in demo_loader:
         # Ensure input is a tensor and rename it to image for clarity
         image = input  # Assign input to image
-        
-        # Ensure image is a tensor
-        image = image.unsqueeze(0) if image.ndimension() == 3 else image  # Add batch dimension if necessary
+
+        # Ensure image has a batch dimension
+        image = image.unsqueeze(0) if image.ndimension() == 3 else image  
 
         # Process the image
         output = get_edges(image)
 
-        # Convert outputs to NumPy arrays for visualization
-        original_image = image.squeeze().cpu().numpy()
-        edges_image = output.squeeze().cpu().numpy()
+        # Convert outputs to NumPy arrays
+        original_image = image.squeeze().cpu().detach().numpy()
+        edges_image = output.squeeze().cpu().detach().numpy()
+        target_image = target.squeeze().cpu().detach().numpy()
 
-        # Ensure both images are 2D (either original or edges)
-        if original_image.ndim == 2:  # If the image is already 2D (1024, 1024)
-            original_image = original_image
-        else:
-            original_image = original_image[0]  # Select the first channel if 3D
+        # Ensure all images are at least 3D for consistency
+        if original_image.ndim == 2:
+            original_image = original_image[:, :, np.newaxis]
+        if edges_image.ndim == 2:
+            edges_image = edges_image[:, :, np.newaxis]
+        if target_image.ndim == 2:
+            target_image = target_image[:, :, np.newaxis]
 
-        # Ensure the edges image has the correct shape
-        if edges_image.ndim == 3 and edges_image.shape[0] > 1:
-            # If the output has more than one channel, select the first channel (edge detection)
-            edges_image = edges_image[0]
+        images = [original_image, edges_image, target_image]
+        titles = ["(1) Input", "(2) Model Output Image", "(3) Target Image"]
 
-        print("Displaying image. Exit out of popup whenever you want to end execution...")
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 
-        # Display the original and processed images
-        plt.figure(figsize=(10, 5))
-        plt.subplot(1, 2, 1)
-        plt.title(f"Original Image: {file_name}")
-        plt.imshow(original_image, cmap="gray")
-        plt.axis("off")
+        for ax, img, title in zip(axes, images, titles):
+            ax.imshow(img.squeeze(), cmap='gray')
+            ax.set_title(title)
+            ax.axis('off')
 
-        plt.subplot(1, 2, 2)
-        plt.title("Edge Detection (Filtered)")
-        plt.imshow(edges_image, cmap="gray")
-        plt.axis("off")
+        plt.tight_layout()
+        
+        # Define the output file path
+        save_path = os.path.join(output_folder, f"{file_name}_combined.png")
+        plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        plt.close()
 
-        plt.show()
+        print(f"Saved combined image: {save_path}")
 
     print("Demo Complete!")
 

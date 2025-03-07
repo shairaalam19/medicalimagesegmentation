@@ -32,8 +32,8 @@ def find_best_and_worst_image(metrics_file, metric):
     return best_image, best_value, worst_image, worst_value
 
 # Example usage
-metrics_file = 'outputs/results/models/training/20250301_230618/epoch_46/test_metrics.json'
-metric_to_check = 'Precision'  # You can change this to any metric, like 'Recall (Sensitivity)', 'F1 Score', etc.
+metrics_file = 'outputs/results/models/training/20250305_231254/epoch_25/test_metrics.json'
+metric_to_check = 'IoU'  # You can change this to any metric, like 'Recall (Sensitivity)', 'F1 Score', etc.
 
 best_image, best_value, worst_image, worst_value = find_best_and_worst_image(metrics_file, metric_to_check)
 
