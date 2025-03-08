@@ -13,10 +13,26 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import sys
+import matplotlib.pyplot as plt
 #print("TensorFlow version:", tf.__version__) # 2.18.0
 
 narrow_band_width = 1
 f_size = 15
+
+# Rough function to visualize tensors
+def visualize_tensor(img_tensor, title):
+    # Create a detached copy for visualization without affecting gradients
+    img_tensor_vis = img_tensor.clone().detach()
+
+    # Convert to numpy for visualization
+    img_np = img_tensor_vis.cpu().numpy()
+
+    # Plot the image
+    plt.imshow(img_np, cmap='gray')
+    plt.axis('off')
+    plt.title(title)
+    plt.show()
+
 
 def re_init_phi(phi, dt, input_image_size_x, input_image_size_y):
     # Shift operations using torch.roll
@@ -191,6 +207,10 @@ def active_contour_layer(elems, nu=5.0, mu=0.2, iter_limit=300):
     
     input_image_size_x = img.shape[1]
     input_image_size_y = img.shape[0]
+
+    # debugging
+    print('Num_iters, nu, mu: ', iter_limit, nu, mu)
+    # visualize_tensor(img, 'Intensity Image')
 
     def _body(i, phi_level):
         # print()
