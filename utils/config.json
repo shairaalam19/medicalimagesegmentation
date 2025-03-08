@@ -6,7 +6,7 @@
     
     "DEMO_DATASET_SIZE": 10,
     "TRAIN_DATASET_SIZE": null,
-    "TEST_DATASET_SIZE": 10,
+    "TEST_DATASET_SIZE": null,
     "TRAINING_BATCH_SIZE": 4,
     "TEST_BATCH_SIZE": 1,
     
@@ -35,7 +35,7 @@
     "EDGE_ATTENTION": true,
     "DEFINE_EDGES_BEFORE": false,
     "DEFINE_EDGES_AFTER": false,
-    "ACM": false,
+    "ACM": true,
 
     "TRAINED_MODEL_FOLDER": "outputs/models/training",
 
@@ -44,5 +44,5 @@
     "DEMO_RESULTS_FOLDER": "outputs/results/demo",
 
     "LOAD_MODEL_FOLDER": "outputs/models/training/20250305_231713", 
-    "MODEL_NAME": "epoch_11.pth"
+    "MODEL_NAME": "epoch_14.pth"
 }

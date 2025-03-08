@@ -62,6 +62,16 @@ Running edge attention + ACM model with higher learning rate:
 screen -r acm_cnn
 ```
 
+Running testing base-cnn: 
+```bash
+screen -r testing
+```
+
+Running testing edge-cnn: 
+```bash
+screen -r testing2
+```
+
 ## GPUs 
 Message from Zhi: 
 Contact if you wish to install system level package.

@@ -140,7 +140,7 @@ def save_combined_image(original, output, target, filename):
         target = target[:, :, np.newaxis]
 
     images = [original, output, target]
-    titles = ["(1) Input", "(2) Model Output Image", "(3) Target Image"]
+    titles = ["(a)", "(b)", "(c)"]
 
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 

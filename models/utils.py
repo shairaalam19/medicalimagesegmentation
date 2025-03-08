@@ -256,7 +256,8 @@ def test_model(model, test_loader, model_path, model_name, criterion):
             batch_losses.append(loss.item())
 
             # Convert tensors to numpy for metric computation
-            outputs_np = torch.sigmoid(outputs).cpu().numpy()  # Convert logits to probabilities
+            # outputs_np = torch.sigmoid(outputs).cpu().numpy()  # Convert logits to probabilities
+            outputs_np = outputs.cpu().numpy()
             targets_np = targets.cpu().numpy()
             
             # Store for overall metrics
@@ -269,10 +270,11 @@ def test_model(model, test_loader, model_path, model_name, criterion):
                 original_filename = os.path.basename(file_name)
                 output_filename = os.path.join(output_folder, f"{original_filename}")
 
-                # fix this output to print the binary mask 
+                # fix this output to print the binary
                 # output = all_outputs[idx].flatten()  # Model outputs (probabilities)
                 # binary_output = (output > threshold).astype(int)  # Convert to binary mask
-                save_combined_image(inputs[j], outputs[j], targets[j], output_filename)
+
+                save_combined_image(inputs[j], torch.round(outputs[j]), targets[j], output_filename)
     
     # Calculate average loss
     average_loss = total_loss / len(test_loader)
@@ -338,6 +340,11 @@ def demo_model(demo_loader, output_folder):
     print("Demo Complete!")
 
 
+import os
+import json
+import numpy as np
+from sklearn.metrics import roc_auc_score, precision_recall_fscore_support
+
 def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, average_loss, output_folder, threshold=0.5):
     """
     Compute performance metrics for binary segmentation on a **per-image** basis 
@@ -356,6 +363,8 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         None (Saves all metrics in a single JSON file).
     """
     metrics_dict = {}
+    iou_list = []
+    dice_list = []
 
     # Compute metrics for each image
     for idx, file_name in enumerate(all_file_names):
@@ -370,8 +379,17 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
 
         # Compute classification metrics
         precision, recall, f1, _ = precision_recall_fscore_support(target, binary_output, average='binary', zero_division=0)
-        iou = jaccard_score(target, binary_output, average='binary', zero_division=0)
-        dice = (2 * iou) / (1 + iou) if iou > 0 else 0  # Avoid division by zero
+
+        # Compute Intersection and Union
+        intersection = np.logical_and(target, binary_output).sum()  # True Positives
+        union = np.logical_or(target, binary_output).sum()  # Union of both masks
+
+        # Compute IoU and Dice coefficient
+        iou = intersection / union if union > 0 else 0
+        dice = (2 * intersection) / (np.sum(target) + np.sum(binary_output)) if (np.sum(target) + np.sum(binary_output)) > 0 else 0
+
+        iou_list.append(iou)
+        dice_list.append(dice)
 
         metrics_dict[file_name] = {
             "AUROC": auroc,
@@ -384,8 +402,8 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         }
 
     # Compute overall metrics (aggregate across all images)
-    all_outputs_flat = np.concatenate(all_outputs, axis=0).flatten()
-    all_targets_flat = (np.concatenate(all_targets, axis=0).flatten() > threshold).astype(int)  # Ensure binary targets
+    all_outputs_flat = np.concatenate([arr.flatten() for arr in all_outputs])
+    all_targets_flat = (np.concatenate([arr.flatten() for arr in all_targets]) > threshold).astype(int)  # Ensure binary targets
     binary_outputs = (all_outputs_flat > threshold).astype(int)
 
     # Overall AUROC
@@ -394,13 +412,19 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
     except ValueError:
         overall_auroc = None  # Handle case where only one class exists in the targets
 
-    # Overall Precision, Recall, F1, IoU, Dice
+    # Overall Precision, Recall, F1
     overall_precision, overall_recall, overall_f1, _ = precision_recall_fscore_support(
         all_targets_flat, binary_outputs, average='binary', zero_division=0
     )
-    overall_iou = jaccard_score(all_targets_flat, binary_outputs, average='binary', zero_division=0)
-    overall_dice = (2 * overall_iou) / (1 + overall_iou) if overall_iou > 0 else 0
 
+    # Compute IoU and Dice as averages of per-image values
+    overall_iou = np.mean(iou_list) if iou_list else 0
+    overall_dice = np.mean(dice_list) if dice_list else 0
+
+    # Ensure output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Save overall metrics
     metrics_dict["overall_metrics"] = {
         "Average Test Loss": average_loss,
         "AUROC": overall_auroc,
@@ -418,5 +442,3 @@ def compute_metrics(all_targets, all_outputs, all_file_names, batch_losses, aver
         json.dump(metrics_dict, f, indent=4)
 
     print(f"Saved all test metrics in {metrics_path}")
-
-
