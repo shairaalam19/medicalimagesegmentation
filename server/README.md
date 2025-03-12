@@ -62,14 +62,14 @@ Running edge attention + ACM model with higher learning rate:
 screen -r acm_cnn
 ```
 
-Running testing base-cnn: 
+Running edge attention + ACM model with higher learning rate with larger ACM dataset: 
 ```bash
-screen -r testing
+screen -r acm_cnn_large
 ```
 
-Running testing edge-cnn: 
+Running testing on train_a/test_a on final edge CNN: 
 ```bash
-screen -r testing2
+screen -r testing
 ```
 
 ## GPUs 

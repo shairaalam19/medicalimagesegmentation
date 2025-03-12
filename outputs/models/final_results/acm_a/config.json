@@ -1,0 +1,56 @@
+{
+    "DEMO": false,
+    "PRETRAINING": true,
+    "TRAIN": true,
+    "TEST": true,
+    
+    "DEMO_DATASET_SIZE": 10,
+    "TRAIN_DATASET_SIZE": null,
+    "TEST_DATASET_SIZE": null,
+    "TRAINING_BATCH_SIZE": 4,
+    "TEST_BATCH_SIZE": 1,
+    
+    "TEST_SPLIT_RATIO": 0.2,
+    "TOTAL_IMAGES": 10, 
+
+    "SAVE_TEST_SPLIT": false,
+    "INPUT_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/frames",
+    "TARGET_DATASET_FOLDER": "data/covid19-ct-scan-lesion-segmentation-dataset/versions/2/masks",
+
+    "GET_SMALLER_DATASET": false,
+    "TRAIN_INPUT_DATASET_INITIAL": "data/train/input",
+    "TRAIN_TARGET_DATASET_INITIAL": "data/train/target",
+    "TEST_INPUT_DATASET_INITIAL": "data/test/input",
+    "TEST_TARGET_DATASET_INITIAL": "data/test/target",
+
+    "TRAIN_INPUT_DATASET": "acm/data/train_a/input",
+    "TRAIN_TARGET_DATASET": "acm/data/train_a/target",
+    "TEST_INPUT_DATASET": "acm/data/test_a/input",
+    "TEST_TARGET_DATASET": "acm/data/test_a/target",
+
+    "EPOCHS": 10,
+    "LEARNING_RATE": 0.001,
+    "PATIENCE": 7,
+
+    "BCE_LOSS": true,
+    "COMPOSITE_LOSS": false,
+    "IOU_LOSS": false,
+    "DICE_LOSS": false,
+
+    "GET_TRAINING_LOSS_GRAPH": false,
+    "LOSS_FILE_PATH": "outputs/models/training/20250305_231713",
+
+    "EDGE_ATTENTION": true,
+    "DEFINE_EDGES_BEFORE": false,
+    "DEFINE_EDGES_AFTER": false,
+    "ACM": true,
+
+    "TRAINED_MODEL_FOLDER": "outputs/models/training",
+
+    "TEST_RESULTS_FOLDER": "outputs/results/models/training",
+
+    "DEMO_RESULTS_FOLDER": "outputs/results/demo",
+
+    "LOAD_MODEL_FOLDER": "outputs/models/final_results/edge_cnn", 
+    "MODEL_NAME": "epoch_50.pth"
+}

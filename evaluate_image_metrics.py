@@ -65,9 +65,9 @@ def plot_box_plot(best_value, worst_value, overall_value, all_values, metric, ou
     print(f"Box plot saved at {plot_path}")
 
 # Example usage
-metrics_file = 'outputs/results/models/training/20250305_231254/epoch_32/test_metrics.json'
+metrics_file = 'outputs/results/models/final_results/edge_cnn/test_metrics.json'
 metric_to_check = 'Dice Score'  # Change to any metric like 'Recall', 'F1-score', etc.
-output_folder = 'outputs/results/models/training/20250305_231254/epoch_32'  # Folder to save the box plot
+output_folder = 'outputs/results/models/final_results/edge_cnn'  # Folder to save the box plot
 
 best_img, best_val, worst_img, worst_val, overall_val, all_vals = find_best_and_worst_image(metrics_file, metric_to_check)
 print(f"Best Image: {best_img}, {metric_to_check}: {best_val}")

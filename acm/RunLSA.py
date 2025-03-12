@@ -8,6 +8,7 @@ def acm_layer(intensity_image, initial_segmentation, num_iter, nu, mu):
     # Note: image and initial segmentation all have the same shape.
 
     # --- From initial segmentation get lambdas and initial phi (they would also have the same shape)
+    # visualize_tensor(initial_segmentation, 'Initial Segmentation')
 
     # lambdas
     map_lambda1, map_lambda2 = get_lambda_maps(initial_segmentation)
@@ -23,6 +24,8 @@ def acm_layer(intensity_image, initial_segmentation, num_iter, nu, mu):
 
     # --- Call active_contour_layer function and get the final seg output
     final_binary_segmentation, final_phi, final_probability_mask = active_contour_layer(elems=elems, nu=nu, mu=mu, iter_limit=num_iter)
+
+    # visualize_tensor(final_probability_mask, 'final segmentation')
     
     # return final probability mask
     return final_probability_mask

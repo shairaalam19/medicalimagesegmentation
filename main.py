@@ -8,7 +8,7 @@ from utils.utils import load_config
 from models.EdgeSegmentationCNN import EdgeSegmentationCNN 
 from models.EdgeSegmentationLoss import EdgeSegmentationLoss 
 from models.utils import save_model, load_model, load_model_pretrained, test_model, train_model, demo_model, save_loss_graph
-from datasets.utils import load_dataset, split_dataset, save_combined_image, create_folder, save_split_dataset
+from datasets.utils import load_dataset, split_dataset, save_combined_image, create_folder, save_split_dataset, create_smaller_split_dataset
 from datasets.EdgeSegmentationDataset import EdgeSegmentationDataset
 
 # -----------------------------------------------------------
@@ -19,7 +19,15 @@ def main():
     config = load_config()
 
     if config["SAVE_TEST_SPLIT"]: 
-        save_split_dataset(config["INPUT_DATASET_FOLDER"], config["TARGET_DATASET_FOLDER"], config["TRAIN_INPUT_DATASET"], config["TRAIN_TARGET_DATASET"], config["TEST_INPUT_DATASET"], config["TEST_TARGET_DATASET"], 1-config["TEST_SPLIT_RATIO"])
+        save_split_dataset(config["INPUT_DATASET_FOLDER"], config["TARGET_DATASET_FOLDER"], config["TRAIN_INPUT_DATASET"], config["TRAIN_TARGET_DATASET"], config["TEST_INPUT_DATASET"], config["TEST_TARGET_DATASET"], 1-config["TEST_SPLIT_RATIO"], config["TOTAL_IMAGES"])
+
+    if config["GET_SMALLER_DATASET"]: 
+        create_smaller_split_dataset(
+            train_input_initial=config["TRAIN_INPUT_DATASET_INITIAL"], train_target_initial=config["TRAIN_TARGET_DATASET_INITIAL"],
+            test_input_initial=config["TEST_INPUT_DATASET_INITIAL"], test_target_initial=config["TEST_TARGET_DATASET_INITIAL"],
+            new_train_input_dir=config["TRAIN_INPUT_DATASET"], new_train_target_dir=config["TRAIN_TARGET_DATASET"],
+            new_test_input_dir=config["TEST_INPUT_DATASET"], new_test_target_dir=config["TEST_TARGET_DATASET"],
+            train_ratio=1-config["TEST_SPLIT_RATIO"], total_images=config["TOTAL_IMAGES"])
 
     if config["DEMO"]: 
         print(f"{('-' * ((100 - len('DEMO') - 2) // 2))} DEMO {('-' * ((100 - len('DEMO') - 2) // 2))}")

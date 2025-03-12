@@ -70,7 +70,7 @@ def split_dataset(dataset, folder_path):
 
     return train_dataset, test_dataset
 
-def save_split_dataset(input_dataset_path, target_dataset_path, train_input_dir, train_target_dir, test_input_dir, test_target_dir, train_ratio=0.8):
+def save_split_dataset(input_dataset_path, target_dataset_path, train_input_dir, train_target_dir, test_input_dir, test_target_dir, train_ratio=0.8, total_images=None):
     # Define output directories
     # train_input_dir = os.path.join(output_path, "train/input")
     # train_target_dir = os.path.join(output_path, "train/target")
@@ -87,6 +87,11 @@ def save_split_dataset(input_dataset_path, target_dataset_path, train_input_dir,
     
     # Ensure input and target files match
     assert input_files == target_files, "Mismatch between input and target files"
+
+    # Limit the dataset if total_images is specified
+    if total_images is not None:
+        input_files = input_files[:total_images]
+        target_files = target_files[:total_images]
     
     # Shuffle and split dataset
     random.shuffle(input_files)
@@ -104,6 +109,54 @@ def save_split_dataset(input_dataset_path, target_dataset_path, train_input_dir,
         shutil.copy(os.path.join(target_dataset_path, file), os.path.join(test_target_dir, file))
     
     print(f"Dataset split completed. Train: {len(train_files)}, Test: {len(test_files)}")
+
+def create_smaller_split_dataset(
+    train_input_initial, train_target_initial,
+    test_input_initial, test_target_initial,
+    new_train_input_dir, new_train_target_dir,
+    new_test_input_dir, new_test_target_dir,
+    train_ratio, total_images):
+
+    # Create directories if they don't exist
+    for directory in [new_train_input_dir, new_train_target_dir, new_test_input_dir, new_test_target_dir]:
+        os.makedirs(directory, exist_ok=True)
+
+    # Collect and shuffle train and test files separately
+    train_input_files = sorted(os.listdir(train_input_initial))
+    train_target_files = sorted(os.listdir(train_target_initial))
+    test_input_files = sorted(os.listdir(test_input_initial))
+    test_target_files = sorted(os.listdir(test_target_initial))
+
+    # Ensure input and target files match for both train and test
+    assert train_input_files == train_target_files, "Mismatch between train input and target files"
+    assert test_input_files == test_target_files, "Mismatch between test input and target files"
+
+    # Shuffle files
+    train_combined = list(zip(train_input_files, train_target_files))
+    test_combined = list(zip(test_input_files, test_target_files))
+    random.shuffle(train_combined)
+    random.shuffle(test_combined)
+
+    # Calculate counts for 80/20 split
+    train_count = int(total_images * train_ratio)
+    test_count = total_images - train_count
+
+    # Select files
+    selected_train = train_combined[:train_count]
+    selected_test = test_combined[:test_count]
+
+    # Copy selected train files
+    for input_file, target_file in selected_train:
+        shutil.copy(os.path.join(train_input_initial, input_file), os.path.join(new_train_input_dir, input_file))
+        shutil.copy(os.path.join(train_target_initial, target_file), os.path.join(new_train_target_dir, target_file))
+
+    # Copy selected test files
+    for input_file, target_file in selected_test:
+        shutil.copy(os.path.join(test_input_initial, input_file), os.path.join(new_test_input_dir, input_file))
+        shutil.copy(os.path.join(test_target_initial, target_file), os.path.join(new_test_target_dir, target_file))
+
+    print(f"New dataset created with {train_count} training and {test_count} testing images.")
+
 
 # -----------------------------------------------------------
 # Save Before and After Images
