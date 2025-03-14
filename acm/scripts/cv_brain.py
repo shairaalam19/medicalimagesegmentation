@@ -29,5 +29,8 @@ init_lsf[row_min:row_max,col_min:col_max]= -1
 # acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Brain/abc/'))
 # lsarh.run_cv(image_path, gt_path, init_lsf=init_lsf , acm_dir=acm_dir, abc=True, iter_lim=100, save_freq=20)
 
-acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Brain/clahe/'))
-lsarh.run_cv(image_path, gt_path, init_lsf=init_lsf , acm_dir=acm_dir, clahe=True, iter_lim=100, save_freq=20)
+# acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Brain/clahe/'))
+# lsarh.run_cv(image_path, gt_path, init_lsf=init_lsf , acm_dir=acm_dir, clahe=True, iter_lim=100, save_freq=20)
+
+acm_dir = os.path.abspath(os.path.join(cwd, '../Results/Chan_Vese_LSA/Brain/gray/'))
+lsarh.run_cv(image_path, gt_path, init_lsf=init_lsf , acm_dir=acm_dir, iter_lim=100, save_freq=20)

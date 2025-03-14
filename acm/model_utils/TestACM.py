@@ -6,19 +6,21 @@ import sys
 import math
 import matplotlib.pyplot as plt
 import torch
+import time
 # torch.set_printoptions(threshold=float('inf'))
 # np.set_printoptions(threshold=np.inf)
-torch.set_printoptions(10)
-np.set_printoptions(10)
+# torch.set_printoptions(10)
+# np.set_printoptions(10)
 
 cwd = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(cwd, '../Level_Set_ACM')))
 
 import lsa_helpers as lsah
-# import LevelSetACM_tf as lsa
-# use_torch = False
-import LevelSetACM_torch as lsa
-use_torch = True
+
+import LevelSetACM_tf as lsa
+use_torch = False
+# import LevelSetACM_torch as lsa
+# use_torch = True
 
 # ----- Original Brain Demo
 print('Testing Model ACM for Original Brain Demo')
@@ -84,6 +86,9 @@ if use_torch:
 # print(f"{init_s[0][0].item():.10f}")
 # print()
 
+# ----- time start
+start_time = time.perf_counter()
+
 # lambdas
 map_lambda1, map_lambda2 = lsa.get_lambda_maps(init_s)
 # print('Shape of map lambda 1: ', map_lambda1.shape)
@@ -129,10 +134,16 @@ if use_torch:
 else:
     nu = 5.0
     mu = 0.2
-    iter_limit = 1
+    iter_limit = 600
 
 # --- Call active_contour_layer function and get the final seg output
 final_seg, final_phi, final_prob_mask = lsa.active_contour_layer(elems=elems, nu=nu, mu=mu, iter_limit=iter_limit)
+
+end_time = time.perf_counter()
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.6f} seconds")
+# -- time end
+
 print('Type of final segmentation mask: ', type(final_seg)) # <class 'tensorflow.python.framework.ops.EagerTensor'>
 print('Shape of final segmentation mask: ', final_seg.shape)
 print('binary mask check for final segmentation: ', lsah.is_binary_mask(final_seg))

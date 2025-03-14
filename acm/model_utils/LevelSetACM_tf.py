@@ -97,19 +97,19 @@ def get_curvature(phi, x, y):
     return curvature, mean_grad
 
 def get_intensity(image, masked_phi, filter_patch_size=5):
-    print('image')
-    print(image)
-    print()
+    # print('image')
+    # print(image)
+    # print()
 
-    print('masked_phi')
-    print(masked_phi)
-    print()
+    # print('masked_phi')
+    # print(masked_phi)
+    # print()
 
     u_1 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(tf.multiply(image, masked_phi))
 
-    print('u_1')
-    print(u_1)
-    print()
+    # print('u_1')
+    # print(u_1)
+    # print()
 
     u_2 = tf.keras.layers.AveragePooling2D(pool_size=(filter_patch_size, filter_patch_size), strides=1, padding='SAME')(masked_phi)
     u_2_prime = 1 - tf.cast((u_2 > 0), dtype='float32') + tf.cast((u_2 < 0), dtype='float32')
@@ -121,22 +121,20 @@ def get_intensity(image, masked_phi, filter_patch_size=5):
 # elems: input dictionary containing all inputs to the level-set acm
 # The function iteratively updates a level set function (phi), representing the boundary of an object in an image, based on energy minimization principles.
 # The returned phi is a binary mask that can directly be compared with ground truth mask using dice function.
-def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu = 5.0, mu = 0.2, iter_limit = 300):
+def active_contour_layer(elems, nu = 5.0, mu = 0.2, iter_limit = 300):
     img = elems[0] # input image (I think intensity values) - 2D matrix [pixel values -]
     init_phi = elems[1] # The initial distance map, which defines the starting contour - 2D
     map_lambda1_acl = elems[2] # Weight map influencing the region-based energy terms - inside contour - 2D
     map_lambda2_acl = elems[3] # Weight map influencing the region-based energy terms - outside contour - 2D
 
-    input_image_size_x = input_image_size
-    input_image_size_y = input_image_size
-    if (input_image_size_2 is not None):
-        input_image_size_y = input_image_size_2
+    input_image_size_x = img.shape[1]
+    input_image_size_y = img.shape[0]
 
     # Each iteration does one phi update [Represents one iteration of level-set ACM]
     def _body(i, phi_level):
-        print()
-        print()
-        print('Level Set ACM Iteration: ', int((i+1).numpy()))
+        # print()
+        # print()
+        # print('Level Set ACM Iteration: ', int((i+1).numpy()))
         #print(phi_level)
 
         # --- Identify the pixels within the narrow band (a region around the zero level set of ϕ)
@@ -147,34 +145,34 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         # Separate the x and y coordinates of the narrow band pixels
         band_y = band[:, 0]
         band_x = band[:, 1]
-        print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
+        # print('Shape of bands: ', band_index.shape, band.shape, band_y.shape, band_x.shape)
         #print(band)
         
         # Reshaping distance map and image into 4 dimensions
         phi_4d = phi_level[tf.newaxis, :, :, tf.newaxis]
         image = img[tf.newaxis, :, :, tf.newaxis]
-        print('Phi_4d and image shapes: ', phi_4d.shape, image.shape)
+        # print('Phi_4d and image shapes: ', phi_4d.shape, image.shape)
 
         # Computing the new band indices around the contour
         band_index_2 = tf.reduce_all([phi_4d <= narrow_band_width, phi_4d >= -narrow_band_width], axis=0)
         band_2 = tf.where(band_index_2)
-        print('Band index 2 and band 2 shapes: ', band_index_2.shape, band_2.shape)
+        # print('Band index 2 and band 2 shapes: ', band_index_2.shape, band_2.shape)
 
         # phi_4d <= 0 and phi_4d > 0 create masks for the inner and outer regions relative to the zero level-set.
         # tf.cast(..., dtype='float32') converts these boolean masks into float tensors (0.0 for False, 1.0 for True).
         # get_intensity computes the average intensity in a local region of the image 
         u_inner = get_intensity(image, tf.cast((([phi_4d <= 0])), dtype='float32')[0], filter_patch_size=f_size)
         u_outer = get_intensity(image, tf.cast((([phi_4d > 0])), dtype='float32')[0], filter_patch_size=f_size)
-        print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
+        # print('u_inner and u_outer shapes: ', u_inner.shape, u_outer.shape)
         #print(u_inner)
         #print(u_outer)
-        sys.exit()
+        # sys.exit()
         # tf.gather_nd retrieves the values of u_inner and u_outer at the indices specified by band_2
         # These operations collect the computed mean intensities for the narrow band pixels, producing arrays of mean intensities 
         # for the inner and outer regions.
         mean_intensities_inner = tf.gather_nd(u_inner, band_2)
         mean_intensities_outer = tf.gather_nd(u_outer, band_2)
-        print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
+        # print('Shape of mean intensities', mean_intensities_inner.shape, mean_intensities_outer.shape)
         #print(mean_intensities_inner)
         #print(mean_intensities_outer)
 
@@ -183,13 +181,13 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         # Gather lambda1 and lambda2 values in the narrow band
         lambda1 = tf.gather_nd(map_lambda1_acl, [band])
         lambda2 = tf.gather_nd(map_lambda2_acl, [band])
-        print('Shape of lambdas: ', lambda1.shape, lambda2.shape)
+        # print('Shape of lambdas: ', lambda1.shape, lambda2.shape)
 
         # Computes the curvature and mean gradient at the band locations of phi_level. 
         curvature, mean_grad = get_curvature(phi_level, band_x, band_y) 
         # Multiplies the curvature by the mean gradient to get the combined effect of curvature regularization at each point in the narrow band.
         kappa = tf.multiply(curvature, mean_grad)
-        print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
+        # print('Shape of curvature terms: ', curvature.shape, mean_grad.shape, kappa.shape)
         # print(curvature)
         # print(mean_grad)
         # print(kappa)
@@ -205,7 +203,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         force = -nu + term1 - term2
         # Normalizes the force by dividing it by its maximum absolute value to prevent instability in the updates.
         force /= (tf.reduce_max(tf.abs(force)))
-        print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
+        # print('Term and force shapes: ', term1.shape, term2.shape, force.shape)
 
         # Calculates the rate of change of phi by adding the force and the product of mu and kappa (which incorporates the curvature term).
         d_phi_dt = tf.cast(force, dtype="float32") + tf.cast(mu * kappa, dtype="float32")
@@ -213,7 +211,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         dt = .45 / (tf.reduce_max(tf.abs(d_phi_dt)) + 2.220446049250313e-16)
         # Calculates the actual change d_phi to apply to phi by multiplying the rate of change by the time step.
         d_phi = dt * d_phi_dt
-        print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
+        # print('Shape of gradients: ', d_phi_dt.shape, dt.shape, d_phi.shape)
 
         # --- Apply the calculated update to the level set function ϕ
         # Assigns d_phi to update_narrow_band to be applied to the narrow band of the level set function.
@@ -226,7 +224,7 @@ def active_contour_layer(elems, input_image_size, input_image_size_2 = None, nu 
         #   A signed distance function phi (x,y) represents the distance from a point (x,y) to the closest point on a contour (or interface), 
         #       with a sign indicating whether the point is inside or outside the contour:
         phi_level = re_init_phi(phi_level, 0.5, input_image_size_x, input_image_size_y)
-        print('Phi level Shape', phi_level.shape)
+        # print('Phi level Shape', phi_level.shape)
         #print(phi_level)
 
         return (i + 1, phi_level)
