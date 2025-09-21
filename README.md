@@ -11,7 +11,7 @@ Integrating Active Contour Models with Attention Mechanisms in Deep Learning for
 4. A final report detailing the approach, results, and challenges.
 
 ## Final Project Report
-We will explain and demo some basic ideas in this README file. A more detailed and thorough explanation, experimentation, and analysis is provided in the our final project report.
+We will explain and demo some basic ideas in this README file. A more detailed and thorough explanation, experimentation, analysis, and challenges description is provided in the our final project report.
 [View Project Report!](Graduate_Capstone_Report.pdf)
 
 ## Datasets 
@@ -27,27 +27,65 @@ We will explain and demo some basic ideas in this README file. A more detailed a
 pip install -r requirements.txt 
 ```
 
-## Literature
-### Active Contour Models 
+## Active Contour Models
 
-**ACM:** Pytorch Impelmentation of Active Contour Models:
+## Attention Mechanisms
+**Base Attention**
+**Edge Attention**
 
-https://github.com/noornk/ACM/tree/main
+## ACM Implementation References
 
-**(DALS) Deep Active Lesion Segmentation**: DALS offers a fast levelset active contour model, implemented entirely in Tensorflow, that can be paired with any CNN backbone for image segmentation.
-
+**Deep Active Lesion Segmentation (DALS)**: DALS offers a fast level set active contour model (LSA), implemented entirely in Tensorflow, that can be paired with any CNN backbone for image segmentation.
 https://github.com/ahatamiz/dals 
 
+**Chan-Vese (CV) ACM Implementation in Kaggle**: Region-based ACM.
+https://www.kaggle.com/code/naim99/active-contour-model-python
 
-## POC
+
+## Proof Of Concept
 ### ACM Usage
+We extracted the ACM logic from both the DALS project and the CV Kaggle implementations and created a pipeline for easy experimentation with both of these ACM's. The pipeline involves image, ground truth, and initial segmentation (contour) pre-processing, constructing inputs to ACM, running ACM, logging, and saving results.
+
+The code base for these experiments is in the [acm folder of model_plus_acm branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm). The [Level_Set_ACM](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Level_Set_ACM) subfolder has the code for the entire pipeline. The [scripts](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/scripts) folder is where we can easily adjust any inputs or parameters and trigger the pipeline to experiment with different configurations and ACMs. Tuning configuration here is basically updating the parameters to the run_lsa (for DALS LSA) or run_cv (for CV ACM) calls. The main parameters include original image, ground truth segmentation, initial contour, output_directory, wether or not to apply preprocessing techniques, how frequently to save intermediate ACM results, and hyperparameters. Our experiment output configurations were mainly directed to the [Results](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Results) folder.
+
+**Let's try a simple demo for Level Set ACM!**
+
+1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm).
+2. `cd acm/scripts`  
+3. `python unet_lsa_dals_brain_demo.py`
+4. This would run 2 versions of the DALS level set acm (LSA) on a brain scan
+  Version 1: reproduces DALS demo results by using their provided input image, CNN generated initial contour, ground truth segmentation, and default hyper-parameters ($\nu$=5, $\mu$=0.2, iterations=600).
+  Version 2: The same configuration as above but uses different hyper-parameters ($\nu$=0, $\mu$=0).
+5. In each output directory, you should be able to see all the intermediate segmentation masks for every 50 iterations of ACM, plot of evolution of IOU and DICE scores throughout the ACM iterations, and an image of initial and final contour overlayed on the input.
+
+Results for Version 1 ($\nu$=5, $\mu$=0.2, iterations=600):
+<p float="left">
+  <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="300"/>
+  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="300"/>
+</p>
+
+
+Results for Version 2 ($\nu$=0, $\mu$=0):
+<p float="left">
+  <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="300"/>
+  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="300"/>
+</p>
+
+This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyper-parameter settings. 
+
+**Let's try a simple demo for Chan-Vese ACM!**
+
+
+Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings.
 
 
 ### Image Segmentation Usage
-Call other edge-based segmentation mechanisms (Roberts/Sobel) using the following command in the [POC branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/POC): 
+Call edge-based segmentation mechanisms (Roberts/Sobel) using the following command in the [POC branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/POC): 
 ```bash
 python image_segmentation/edge_based.py
 ```
+
+## Hybrid Model Architecture
 
 ## Model
 ### Running the final model
