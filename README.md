@@ -28,6 +28,7 @@ pip install -r requirements.txt
 ```
 
 ## Active Contour Models
+Active Contour Models (ACMs) are used to detect object boundaries in images by iteratively evolving curves to minimize an energy function. Although all ACMs follow the same energy minimization principle, their energy formulations and corresponding hyperparameters can differ, affecting performance across applications.
 
 ## Attention Mechanisms
 **Base Attention**
@@ -60,21 +61,30 @@ The code base for these experiments is in the [acm folder of model_plus_acm bran
 
 Results for Version 1 ($\nu$=5, $\mu$=0.2, iterations=600):
 <p float="left">
-  <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="300"/>
-  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="300"/>
+  <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="250" height="250"/>
+  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="250" height="250"/>
 </p>
 
 
 Results for Version 2 ($\nu$=0, $\mu$=0):
 <p float="left">
-  <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="300"/>
-  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="300"/>
+  <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="250" height="250"/>
+  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="250" height="250"/>
 </p>
 
 This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyper-parameter settings. 
 
 **Let's try a simple demo for Chan-Vese ACM!**
 
+1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm).
+2. `cd acm/scripts`  
+3. `python cv_skin_lesion.py`
+4. This would run a Chan Vese ACM on an image from ISIC dataset (ensure this image has been downloaded at correct path). It starts with a simple square in the middle of the image as the initial contour and has the hyperparameter settings: $\nu$=100, $\mu$=1, iterations=150.
+
+<p float="left">
+  <img src="readme_images/acm_skin_demo.png" alt="ACM Contour Evolution" width="250" height="250"/>
+  <img src="readme_images/acm_scores_skin_demo.png" alt="ACM Scores Progression" width="250" height="250"/>
+</p>
 
 Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings.
 
@@ -86,6 +96,9 @@ python image_segmentation/edge_based.py
 ```
 
 ## Hybrid Model Architecture
+Here is a diagram of our final neural network architecture incorporating a baseline CNN, attention layers, and ACMS. Our main novelty is introducing an ”ACM Hyperparameter Generator” into the image segmentation CNN that can be trained to generate image-dependent optimal ACM hyperparameters for effective segmentation refinement. The model’s strong results on small datasets highlight its potential effectiveness, suggesting that it is well-suited for applications where high-quality segmentation is required on limited data samples. Future work can potentially focus on training efficiency with large datasets as backpropagating across ACM iterations is time-consuming.
+
+![Hybrid Deep Learning Model for Medical Image Segmentation](readme_images/acm_plus_cnn.png)
 
 ## Model
 ### Running the final model
