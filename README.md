@@ -31,8 +31,8 @@ pip install -r requirements.txt
 Active Contour Models (ACMs) are used to detect object boundaries in images by iteratively evolving curves to minimize an energy function. Although all ACMs follow the same energy minimization principle, their energy formulations and corresponding hyperparameters can differ, affecting performance across applications.
 
 ## Attention Mechanisms
-**Base Attention**
-**Edge Attention**
+**Base Attention Modules**: Scale module input using learned attention weights
+**Edge Attention**: The Edge Attention Module enhances feature learning by combining image features with edge information. First, a convolution + ReLU extracts features from the module input. Edges are obtained from module input using robert's operator logic and passed through an attention layer to generate attention weights. These weights are applied to the features, allowing the network to focus more on edge-relevant regions.
 
 ## ACM Implementation References
 
@@ -102,7 +102,7 @@ Here is a diagram of our final neural network architecture incorporating a basel
 
 ## Model
 ### Running the final model
-Fix the utils/config.json to your liking with various epochs, etc. 
+Fix the utils/config.json to your liking with various epochs, loss function criteria (IOU, DICE, BCE, etc), etc... 
 
 Then run: 
 ```sh
