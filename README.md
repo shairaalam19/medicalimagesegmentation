@@ -109,4 +109,13 @@ Then run:
 python main.py
 ```
 
-### Example configuration and demo
+### Hybrid Model Demo
+We trained the hybrid model (with acm) starting from pre-trained weights (gathered from training a baseline model with edge attention and without acm for ~11 epochs on entire Covid 19 CT Scan DataSet [pretrained baseline model](outputs/models/edge_attention_epoch_11.pth)) on a small dataset of 10 images with 80/20 train-test split ratio, 3 epochs and, BCE Loss. This small demo was done to closely follow the training process and ensure that ACM hyperparameters are being learned. Attached are the training losses over epochs and the results of testing the final model on the two test images.
+
+<p float="left">
+  <img src="readme_images/training_loss_per_batch.png" alt="Training Loss Over Epochs" width="250" height="250"/>
+  <img src="readme_images/bjorke_9.png" alt="Test 1" width="250" height="250"/>
+  <img src="readme_images/bjorke_10.png" alt="Test 2" width="250" height="250"/>
+</p>
+
+These are initial proof of concept demo results. The [report]((Graduate_Capstone_Report.pdf)) contains results and analysis after much more thorough training.
