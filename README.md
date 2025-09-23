@@ -110,7 +110,74 @@ python main.py
 ```
 
 ### Hybrid Model Demo
-We trained the hybrid model (with acm) starting from pre-trained weights (gathered from training a baseline model with edge attention and without acm for ~11 epochs on entire Covid 19 CT Scan DataSet [pretrained baseline model](outputs/models/edge_attention_epoch_11.pth)) on a small dataset of 10 images with 80/20 train-test split ratio, 3 epochs and, BCE Loss. This small demo was done to closely follow the training process and ensure that ACM hyperparameters are being learned. Attached are the training losses over epochs and the results of testing the final model on the two test images.
+We trained the hybrid model (with acm) starting from pre-trained weights (gathered from training a baseline model with edge attention and without acm for ~11 epochs on entire Covid 19 CT Scan DataSet [pretrained baseline model](outputs/models/edge_attention_epoch_11.pth)) on a small dataset of 10 images with 80/20 train-test split ratio, 3 epochs and, BCE Loss. This small demo was done to closely follow the training process and ensure that ACM hyperparameters are being learned.
+
+```sh
+cp demo/config.json utils/config.json
+python main.py
+```
+
+```
+---------------------------------------------- TRAIN ----------------------------------------------
+Created training session folder: demo/output/model/20250922_202702
+Loading input dataset from: demo/data/train/input and targets from: demo/data/train/target
+Loaded 8 images from dataset.
+Using pretrained model...
+Loading model information from: outputs/models/edge_attention_epoch_11.pth
+Using Edge Attention Block
+Using Active Contour Layer
+Training model...
+Saved models/EdgeSegmentationCNN.py to demo/output/model/20250922_202702/EdgeSegmentationCNN.py
+Saved utils/config.json to demo/output/model/20250922_202702/config.json
+Num_iters, nu, mu:  tensor(85., grad_fn=<UnbindBackward0>) tensor(7.9161, grad_fn=<UnbindBackward0>) tensor(0.1197, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(92., grad_fn=<UnbindBackward0>) tensor(8.4695, grad_fn=<UnbindBackward0>) tensor(0.1083, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(88., grad_fn=<UnbindBackward0>) tensor(8.0119, grad_fn=<UnbindBackward0>) tensor(0.1228, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(96., grad_fn=<UnbindBackward0>) tensor(9.2927, grad_fn=<UnbindBackward0>) tensor(0.0320, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(90., grad_fn=<UnbindBackward0>) tensor(8.4591, grad_fn=<UnbindBackward0>) tensor(0.0693, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(95., grad_fn=<UnbindBackward0>) tensor(9.0194, grad_fn=<UnbindBackward0>) tensor(0.0465, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(97., grad_fn=<UnbindBackward0>) tensor(9.3894, grad_fn=<UnbindBackward0>) tensor(0.0216, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(93., grad_fn=<UnbindBackward0>) tensor(8.8983, grad_fn=<UnbindBackward0>) tensor(0.0572, grad_fn=<UnbindBackward0>)
+Epoch 1/3, Loss: 0.4112
+Learning rate after epoch 1: [0.001]
+Model saved at: demo/output/model/20250922_202702/epoch_1.pth
+Num_iters, nu, mu:  tensor(97., grad_fn=<UnbindBackward0>) tensor(9.5147, grad_fn=<UnbindBackward0>) tensor(0.0151, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(99., grad_fn=<UnbindBackward0>) tensor(9.7731, grad_fn=<UnbindBackward0>) tensor(0.0033, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(95., grad_fn=<UnbindBackward0>) tensor(9.2844, grad_fn=<UnbindBackward0>) tensor(0.0257, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(93., grad_fn=<UnbindBackward0>) tensor(9.0064, grad_fn=<UnbindBackward0>) tensor(0.0304, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(94., grad_fn=<UnbindBackward0>) tensor(9.2934, grad_fn=<UnbindBackward0>) tensor(0.0157, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(99., grad_fn=<UnbindBackward0>) tensor(9.8654, grad_fn=<UnbindBackward0>) tensor(0.0013, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(91., grad_fn=<UnbindBackward0>) tensor(9.0038, grad_fn=<UnbindBackward0>) tensor(0.0308, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(98., grad_fn=<UnbindBackward0>) tensor(9.6747, grad_fn=<UnbindBackward0>) tensor(0.0066, grad_fn=<UnbindBackward0>)
+Epoch 2/3, Loss: 0.3523
+Learning rate after epoch 2: [0.001]
+Model saved at: demo/output/model/20250922_202702/epoch_2.pth
+Num_iters, nu, mu:  tensor(91., grad_fn=<UnbindBackward0>) tensor(9.1331, grad_fn=<UnbindBackward0>) tensor(0.0266, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(99., grad_fn=<UnbindBackward0>) tensor(9.9032, grad_fn=<UnbindBackward0>) tensor(0.0010, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(100., grad_fn=<UnbindBackward0>) tensor(9.9637, grad_fn=<UnbindBackward0>) tensor(0.0001, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(98., grad_fn=<UnbindBackward0>) tensor(9.7841, grad_fn=<UnbindBackward0>) tensor(0.0029, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(100., grad_fn=<UnbindBackward0>) tensor(9.9743, grad_fn=<UnbindBackward0>) tensor(6.4373e-05, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(98., grad_fn=<UnbindBackward0>) tensor(9.8396, grad_fn=<UnbindBackward0>) tensor(0.0017, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(97., grad_fn=<UnbindBackward0>) tensor(9.6808, grad_fn=<UnbindBackward0>) tensor(0.0044, grad_fn=<UnbindBackward0>)
+Num_iters, nu, mu:  tensor(99., grad_fn=<UnbindBackward0>) tensor(9.8948, grad_fn=<UnbindBackward0>) tensor(0.0008, grad_fn=<UnbindBackward0>)
+Epoch 3/3, Loss: 0.3471
+Learning rate after epoch 3: [0.001]
+Model saved at: demo/output/model/20250922_202702/epoch_3.pth
+Training complete!
+Final epoch: epoch_3
+Model saved at: demo/output/model/20250922_202702/epoch_3.pth
+Loss graph saved at: demo/output/model/20250922_202702/Training Loss per Batch
+----------------------------------------------- TEST -----------------------------------------------
+Loading input dataset from: demo/data/test/input and targets from: demo/data/test/target
+Loaded 2 images from dataset.
+Testing the model epoch_3 in demo/output/model/20250922_202702 and saving before and after images in demo/output/test_results/20250922_202702/epoch_3
+Model saved at: demo/output/test_results/20250922_202702/epoch_3/model.pth
+Num_iters, nu, mu:  tensor(99.) tensor(9.9449) tensor(0.0003)
+Num_iters, nu, mu:  tensor(99.) tensor(9.9466) tensor(0.0003)
+Saved all test metrics in demo/output/test_results/20250922_202702/epoch_3/test_metrics.json
+Testing complete! Images saved to demo/output/test_results/20250922_202702/epoch_3.
+```
+
+Attached are the training losses over epochs and the results of testing the final model on the two test images.
 
 <p float="left">
   <img src="readme_images/training_loss_per_batch.png" alt="Training Loss Over Epochs" width="250" height="250"/>
