@@ -31,7 +31,8 @@ pip install -r requirements.txt
 Active Contour Models (ACMs) are used to detect object boundaries in images by iteratively evolving curves to minimize an energy function. Although all ACMs follow the same energy minimization principle, their energy formulations and corresponding hyperparameters can differ, affecting performance across applications.
 
 ## Attention Mechanisms
-**Base Attention Modules**: Scale module input using learned attention weights
+**Base Attention Modules**: Scale module input using learned attention weights.
+
 **Edge Attention**: The Edge Attention Module enhances feature learning by combining image features with edge information. First, a convolution + ReLU extracts features from the module input. Edges are obtained from module input using robert's operator logic and passed through an attention layer to generate attention weights. These weights are applied to the features, allowing the network to focus more on edge-relevant regions.
 
 ## ACM Implementation References
@@ -110,12 +111,30 @@ python main.py
 ```
 
 ### Hybrid Model Demo
-We trained the hybrid model (with acm) starting from pre-trained weights (gathered from training a baseline model with edge attention and without acm for ~11 epochs on entire Covid 19 CT Scan DataSet [pretrained baseline model](outputs/models/edge_attention_epoch_11.pth)) on a small dataset of 10 images with 80/20 train-test split ratio, 3 epochs and, BCE Loss. This small demo was done to closely follow the training process and ensure that ACM hyperparameters are being learned.
+
+The [demo](demo) folder in the main branch has the following contents:
+1. data folder -> consists of small train (8 images) and test (2 images) datasets from the Covid 19 CT Scan DataSet.
+2. output folder -> to store trained model and test results from demo run.
+3. config.json -> an example configuration. Some important specifications:
+  - Desired functionality - use of pretrained model, training, and testing
+  - Dataset properties & location
+  - Enabling of acm and edge attention layers
+  - [Pretrained baseline model](outputs/models/edge_attention_epoch_11.pth) location - a baseline model trained with edge attention and without acm for ~11 epochs on entire Covid 19 CT Scan DataSet. We start training our model with ACM on top of such a pretrained model.
+  - 3 epochs, train batch size (4 images), test batch size (1 image)
+  - Use of binary cross entropy loss (BCE) as the loss function
+  - Output folder to store trained model and best and worst case test result masks.
+
+This small demo was done to closely follow the training process on any local machine (w/o requiring GPU) and to ensure that ACM hyperparameters are being learned.
+  
+**Instructions**
+Make sure you are in the [main branch source directory](https://github.com/shairaalam19/medicalimagesegmentation/tree/main).
 
 ```sh
 cp demo/config.json utils/config.json
 python main.py
 ```
+
+**Terminal Output**
 
 ```
 ---------------------------------------------- TRAIN ----------------------------------------------
@@ -177,12 +196,20 @@ Saved all test metrics in demo/output/test_results/20250922_202702/epoch_3/test_
 Testing complete! Images saved to demo/output/test_results/20250922_202702/epoch_3.
 ```
 
+**Output Description**
+The first part depicts the training process. You can see that 3 epochs occur and in each epoch the 8 training images go through a forwards pass and the loss is backpropagated and recorded. The terminal output shows print statements of the ACM parameters (num_iters, nu, mu) generated for each image for the ACM (contour refinement) in the forward pass. Backpropagating over these ACM iterations is computationally intensive, which is why using an initial pretrained baseline model increases efficiency and accuracy. Once training completes the model for each epoch is stored under a timestamp subdirectory in the [demo model output folder](demo/output/model). Also a plot of the training loss over epochs is saved.
+
+The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting cloud masks are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
+
 Attached are the training losses over epochs and the results of testing the final model on the two test images.
 
+![Training loss per epoch](readme_images/training_loss_per_batch.png)
+
 <p float="left">
-  <img src="readme_images/training_loss_per_batch.png" alt="Training Loss Over Epochs" width="250" height="250"/>
   <img src="readme_images/bjorke_9.png" alt="Test 1" width="250" height="250"/>
   <img src="readme_images/bjorke_10.png" alt="Test 2" width="250" height="250"/>
 </p>
 
-These are initial proof of concept demo results. The [report]((Graduate_Capstone_Report.pdf)) contains results and analysis after much more thorough training.
+These are initial proof of concept demo results. The model’s strong performance on small datasets demonstrates its potential for high-quality segmentation when data is limited. For larger datasets, a more computationally efficient backbone (e.g., a CNN with attention layers) can first be trained extensively, after which an ACM hyperparameter layer can be integrated and fine-tuned on smaller subsets where precise segmentation is critical.
+
+The [report]((Graduate_Capstone_Report.pdf)) contains results and analysis after more thorough training.
