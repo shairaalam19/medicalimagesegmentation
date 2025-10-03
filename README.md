@@ -62,15 +62,15 @@ The code base for these experiments is in the [acm folder of model_plus_acm bran
 
 Results for Version 1 ($\nu$=5, $\mu$=0.2, iterations=600):
 <p float="left">
-  <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="250" height="250"/>
-  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="250" height="250"/>
+  <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="250"/>
+  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="300"/>
 </p>
 
 
 Results for Version 2 ($\nu$=0, $\mu$=0):
 <p float="left">
-  <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="250" height="250"/>
-  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="250" height="250"/>
+  <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="250"/>
+  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="300"/>
 </p>
 
 This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyper-parameter settings. 
@@ -83,8 +83,8 @@ This demo shows that the effectiveness of ACM on an image is highly dependent on
 4. This would run a Chan Vese ACM on an image from ISIC dataset (ensure this image has been downloaded at correct path). It starts with a simple square in the middle of the image as the initial contour and has the hyperparameter settings: $\nu$=100, $\mu$=1, iterations=150.
 
 <p float="left">
-  <img src="readme_images/acm_skin_demo.png" alt="ACM Contour Evolution" width="250" height="250"/>
-  <img src="readme_images/acm_scores_skin_demo.png" alt="ACM Scores Progression" width="250" height="250"/>
+  <img src="readme_images/acm_skin_demo.png" alt="ACM Contour Evolution" width="250"/>
+  <img src="readme_images/acm_scores_skin_demo.png" alt="ACM Scores Progression" width="300"/>
 </p>
 
 Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings.
@@ -97,7 +97,7 @@ python image_segmentation/edge_based.py
 ```
 
 ## Hybrid Model Architecture
-Here is a diagram of our final neural network architecture incorporating a baseline CNN, attention layers, and ACMS. Our main novelty is introducing an ”ACM Hyperparameter Generator” into the image segmentation CNN that can be trained to generate image-dependent optimal ACM hyperparameters for effective segmentation refinement. The model’s strong results on small datasets highlight its potential effectiveness, suggesting that it is well-suited for applications where high-quality segmentation is required on limited data samples. Future work can potentially focus on training efficiency with large datasets as backpropagating across ACM iterations is time-consuming.
+Here is a diagram of our final neural network architecture incorporating a baseline CNN, attention layers, and ACMS. The encoder downsamples to extract features and reduces the spatial dimensions. The bottleneck further processes features and focuses on important features with more attention. The decoder upsamples features to construct an initial probability mask. Our main novelty is introducing an ”ACM Hyperparameter Generator” into the image segmentation CNN that can be trained to generate image-dependent optimal ACM hyperparameters for effective segmentation refinement. The model’s strong results on small datasets highlight its potential effectiveness, suggesting that it is well-suited for applications where high-quality segmentation is required on limited data samples. Future work can potentially focus on training efficiency with large datasets as backpropagating across ACM iterations is time-consuming.
 
 ![Hybrid Deep Learning Model for Medical Image Segmentation](readme_images/acm_plus_cnn.png)
 
@@ -201,15 +201,14 @@ The first part depicts the training process. You can see that 3 epochs occur and
 
 The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting cloud masks are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
 
-Attached are the training losses over epochs and the results of testing the final model on the two test images.
+Attached are the training losses over epochs and the results of testing the final model on the two test images. 'a' represents intensity image, 'b' represents the predicted segmentation output of the trained model, and 'c' represents ground truth segmentation.
 
-![Training loss per epoch](readme_images/training_loss_per_batch.png)
+<img src="readme_images/training_loss_per_batch.png" alt="Training loss per epoch" width="400"/>
 
-<p float="left">
-  <img src="readme_images/bjorke_9.png" alt="Test 1" width="250" height="250"/>
-  <img src="readme_images/bjorke_10.png" alt="Test 2" width="250" height="250"/>
-</p>
+<img src="readme_images/bjorke_9.png" alt="Test 1" width="300"/>
+<img src="readme_images/bjorke_10.png" alt="Test 2" width="300"/>
+
 
 These are initial proof of concept demo results. The model’s strong performance on small datasets demonstrates its potential for high-quality segmentation when data is limited. For larger datasets, a more computationally efficient backbone (e.g., a CNN with attention layers) can first be trained extensively, after which an ACM hyperparameter layer can be integrated and fine-tuned on smaller subsets where precise segmentation is critical.
 
-The [report]((Graduate_Capstone_Report.pdf)) contains results and analysis after more thorough training.
+The [report](Graduate_Capstone_Report.pdf) contains results and analysis after more thorough training. Moreover, our [ICCV Submission](ICCV.pdf) is a more condensed version of our report.
