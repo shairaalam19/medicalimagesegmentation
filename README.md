@@ -94,7 +94,7 @@ This demo shows that the effectiveness of ACM on an image is highly dependent on
 
 **Let's try a simple demo for Chan-Vese ACM!**
 
-1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm).
+1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm).
 2. `cd acm/scripts`  
 3. `python cv_skin_lesion.py`
 4. This would run a Chan Vese ACM on an image from ISIC dataset (ensure this image has been downloaded at correct path). It starts with a simple square in the middle of the image as the initial contour and has the hyperparameter settings: $\nu$=100, $\mu$=1, iterations=150.
