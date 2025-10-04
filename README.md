@@ -40,7 +40,7 @@ Active Contour Models (ACMs) are used to detect object boundaries in images by i
 **Deep Active Lesion Segmentation (DALS)**: DALS offers a fast level set active contour model (LSA), implemented entirely in Tensorflow, that can be paired with any CNN backbone for image segmentation.
 https://github.com/ahatamiz/dals 
 
-**Chan-Vese (CV) ACM Implementation in Kaggle**: Region-based ACM.
+**Chan-Vese (CV) ACM Implementation in Kaggle**: Region-based ACM. Region-based ACMs consider global information and segment objects by minimizing energy derived from statistical differences between regions inside and outside the contour, rather than relying solely on edge information or level-set (strip surrounding current contour) information.
 https://www.kaggle.com/code/naim99/active-contour-model-python
 
 
@@ -86,7 +86,10 @@ Results for Version 2 ($\nu$=0, $\mu$=0, iterations=600):
   <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="400"/>
 </p>
 
-This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyperparameter settings. 
+This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyperparameter settings. Parameter $\mu$ controls the regularization strength, enforcing smoothness in the evolving contour and preventing noisy or irregular boundaries. Parameter $\nu$ controls the balloon force, which expands or shrinks the contour toward object boundaries. As an example, in lung lesion CT scans, the optimal values for these parameters may vary depending on the lesion characteristics:
+* Small, well-defined nodules: A lower μ allows the contour to adhere closely to fine lesion boundaries, while a moderate ν helps drive the contour outward without overshooting into surrounding lung tissue.
+* Large, diffuse lesions with weak boundaries: A higher μ is required to suppress noise and maintain contour smoothness, while a stronger ν is often necessary to push the contour across regions of low contrast and capture the full extent of the lesion.
+*The current approach to setting these hyperparameters is manual trial and error which is infeasible. This motivates learning of ACM hyperparameters within neural networks.*
 
 **Let's try a simple demo for Chan-Vese ACM!**
 
@@ -100,7 +103,7 @@ This demo shows that the effectiveness of ACM on an image is highly dependent on
   <img src="readme_images/acm_scores_skin_demo.png" alt="ACM Scores Progression" width="300"/>
 </p>
 
-Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings.
+Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings. 
 
 ### Edge Segmentation Usage
 Call edge-based segmentation mechanisms (Roberts/Sobel) using the following command in the [POC branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/POC): 
