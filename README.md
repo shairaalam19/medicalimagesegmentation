@@ -16,7 +16,7 @@ We will explain and demo some basic ideas in this README file. A more detailed a
 
 ## Datasets 
 * A collection of medical image datasets: https://drive.google.com/file/d/1iXFm9M1ocrWNkEIthWUWnZYY2-1l-qya/view 
-* For our final model implementation and testing, we used the Covid-19 lung CT scan lesion segmentation dataset: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset. This dataset can also be downloaded by running `data/utils.py`.
+* For our final model training and testing, we used the Covid-19 lung CT scan lesion segmentation dataset: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset. This dataset can also be downloaded by running `data/utils.py`.
 * Other datasets we utilized for some initial experiments: ISIC, DRIVE, chase_db1. We found these datasets through Kaggle as well.
 * ISIC: https://challenge.isic-archive.com/data/#2016
 * Ensure all these datasets are downloaded under the `data/` folder of this repo.
@@ -65,10 +65,10 @@ Experiments are configured in the [scripts](https://github.com/shairaalam19/medi
 
 **Let's try a simple demo for Level Set ACM!**
 
-1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm).
+1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm).
 2. `cd acm/scripts`  
 3. `python unet_lsa_dals_brain_demo.py`
-4. This would run two versions of the DALS level set acm (LSA) on a brain scan
+4. This would run two versions of the DALS level set acm (LSA) on a brain scan.
   Version 1: reproduces DALS demo results by using their provided input image, CNN generated initial contour, ground truth segmentation, and default hyperparameters ($\nu$=5, $\mu$=0.2, iterations=600).
   Version 2: The same configuration as above but uses different hyper-parameters ($\nu$=0, $\mu$=0, iterations=600).
 5. In each output directory, you should be able to see all the intermediate segmentation masks for every 50 iterations of ACM, plot of evolution of IOU and DICE scores throughout the ACM iterations, and an image of initial and final contour overlayed on the input.
@@ -89,6 +89,7 @@ Results for Version 2 ($\nu$=0, $\mu$=0, iterations=600):
 This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyperparameter settings. Parameter $\mu$ controls the regularization strength, enforcing smoothness in the evolving contour and preventing noisy or irregular boundaries. Parameter $\nu$ controls the balloon force, which expands or shrinks the contour toward object boundaries. As an example, in lung lesion CT scans, the optimal values for these parameters may vary depending on the lesion characteristics:
 * Small, well-defined nodules: A lower μ allows the contour to adhere closely to fine lesion boundaries, while a moderate ν helps drive the contour outward without overshooting into surrounding lung tissue.
 * Large, diffuse lesions with weak boundaries: A higher μ is required to suppress noise and maintain contour smoothness, while a stronger ν is often necessary to push the contour across regions of low contrast and capture the full extent of the lesion.
+
 *The current approach to setting these hyperparameters is manual trial and error which is infeasible. This motivates learning of ACM hyperparameters within neural networks.*
 
 **Let's try a simple demo for Chan-Vese ACM!**
@@ -103,7 +104,7 @@ This demo shows that the effectiveness of ACM on an image is highly dependent on
   <img src="readme_images/acm_scores_skin_demo.png" alt="ACM Scores Progression" width="300"/>
 </p>
 
-Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings. 
+Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initializations. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings. 
 
 ### Edge Segmentation Usage
 Call edge-based segmentation mechanisms (Roberts/Sobel) using the following command in the [POC branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/POC): 
@@ -212,9 +213,9 @@ Testing complete! Images saved to demo/output/test_results/20250922_202702/epoch
 ```
 
 **Output Description**
-The first part depicts the training process. You can see that 3 epochs occur and in each epoch the 8 training images go through a forwards pass and the loss is backpropagated and recorded. The terminal output shows print statements of the ACM parameters (num_iters, nu, mu) generated for each image for the ACM (contour refinement) in the forward pass. Backpropagating over these ACM iterations is computationally intensive, which is why using an initial pretrained baseline model increases efficiency and accuracy. Once training completes the model for each epoch is stored under a timestamp subdirectory in the [demo model output folder](demo/output/model). Also a plot of the training loss over epochs is saved.
+The first part depicts the training process. You can see that 3 epochs occur and in each epoch the 8 training images go through a forwards pass and the loss is backpropagated and recorded. The terminal output shows print statements of the ACM parameters (num_iters, $\nu$, $\mu$) generated for each image in the forward pass. Backpropagating over these ACM iterations is computationally intensive, which is why using an initial pretrained baseline model increases efficiency and accuracy. Once training completes the model for each epoch is stored under a timestamp subdirectory in the [demo model output folder](demo/output/model). Also a plot of the training loss over epochs is saved.
 
-The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting cloud masks and test metrics are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
+The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting lesion masks and test metrics are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
 
 Attached are the training losses over epochs and the results of testing the final model on the two test images. 'a' represents intensity image, 'b' represents the predicted segmentation output of the trained model, and 'c' represents ground truth segmentation. The overall test metrics are also displayed.
 
