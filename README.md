@@ -1,5 +1,5 @@
 # Medical Image Segmentation
-Integrating Active Contour Models with Attention Mechanisms in Deep Learning for Medical Image Segmentation
+Integrating Active Contour Models and Attention Mechanisms in Deep Learning for Medical Image Segmentation
 
 ## Project Outline:
 **Objective**: Develop a hybrid image segmentation model that integrates Active Contour Models (ACMs) and attention mechanisms in a baseline deep learning model (CNN), targeting medical images where precise boundary detection is crucial.
@@ -16,7 +16,7 @@ We will explain and demo some basic ideas in this README file. A more detailed a
 
 ## Datasets 
 * A collection of medical image datasets: https://drive.google.com/file/d/1iXFm9M1ocrWNkEIthWUWnZYY2-1l-qya/view 
-* For our final model implementation and testing we used the lung COVID-19 CT-Scans Dataset: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset. This dataset can also be downloaded by running `data/utils.py`.
+* For our final model implementation and testing, we used the Covid-19 lung CT scan lesion segmentation dataset: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset. This dataset can also be downloaded by running `data/utils.py`.
 * Other datasets we utilized for some initial experiments: ISIC, DRIVE, chase_db1. We found these datasets through Kaggle as well.
 * ISIC: https://challenge.isic-archive.com/data/#2016
 * Ensure all these datasets are downloaded under the `data/` folder of this repo.
@@ -46,34 +46,47 @@ https://www.kaggle.com/code/naim99/active-contour-model-python
 
 ## Proof Of Concept
 ### ACM Usage
-We extracted the ACM logic from both the DALS project and the CV Kaggle implementations and created a pipeline for easy experimentation with both of these ACM's. The pipeline involves image, ground truth, and initial segmentation (contour) pre-processing, constructing inputs to ACM, running ACM, logging, and saving results.
+We extracted ACM logic from both the DALS project and CV Kaggle implementations to create a unified pipeline for experimentation with multiple ACMs. Pipeline components:
+* Preprocessing of images, ground truth masks, and initial contours
+* Construction of ACM inputs and ACM execution
+* Logging and saving results
 
-The code base for these experiments is in the [acm folder of model_plus_acm branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm). The [Level_Set_ACM](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Level_Set_ACM) subfolder has the code for the entire pipeline. The [scripts](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/scripts) folder is where we can easily adjust any inputs or parameters and trigger the pipeline to experiment with different configurations and ACMs. Tuning configuration here is basically updating the parameters to the run_lsa (for DALS LSA) or run_cv (for CV ACM) calls. The main parameters include original image, ground truth segmentation, initial contour, output_directory, wether or not to apply preprocessing techniques, how frequently to save intermediate ACM results, and hyperparameters. Our experiment output configurations were mainly directed to the [Results](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Results) folder.
+The code base for these experiments is in the [acm folder of model_plus_acm branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm). Structure:
+* [Level_Set_ACM](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Level_Set_ACM): full pipeline implementation.
+* [scripts](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/scripts): scripts to set parameters and trigger experiments.
+* [Results](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/Results): stored experiment outputs
+
+Experiments are configured in the [scripts](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm/scripts) folder, which call the pipeline’s core functions: `run_lsa` (runs DALS LSA) and `run_cv` (runs CV ACM). Configurable parameters include:
+* Input image, ground truth segmentation, & initial contour
+* Image preprocessing preferences
+* ACM hyperparameters
+* Output directory
+* Frequency of saving intermediate ACM results
 
 **Let's try a simple demo for Level Set ACM!**
 
 1. Go to the correct [branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/model_plus_acm/acm).
 2. `cd acm/scripts`  
 3. `python unet_lsa_dals_brain_demo.py`
-4. This would run 2 versions of the DALS level set acm (LSA) on a brain scan
-  Version 1: reproduces DALS demo results by using their provided input image, CNN generated initial contour, ground truth segmentation, and default hyper-parameters ($\nu$=5, $\mu$=0.2, iterations=600).
-  Version 2: The same configuration as above but uses different hyper-parameters ($\nu$=0, $\mu$=0).
+4. This would run two versions of the DALS level set acm (LSA) on a brain scan
+  Version 1: reproduces DALS demo results by using their provided input image, CNN generated initial contour, ground truth segmentation, and default hyperparameters ($\nu$=5, $\mu$=0.2, iterations=600).
+  Version 2: The same configuration as above but uses different hyper-parameters ($\nu$=0, $\mu$=0, iterations=600).
 5. In each output directory, you should be able to see all the intermediate segmentation masks for every 50 iterations of ACM, plot of evolution of IOU and DICE scores throughout the ACM iterations, and an image of initial and final contour overlayed on the input.
 
 Results for Version 1 ($\nu$=5, $\mu$=0.2, iterations=600):
 <p float="left">
   <img src="readme_images/acm_brain_demo.png" alt="ACM Contour Evolution" width="250"/>
-  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="300"/>
+  <img src="readme_images/acm_scores_brain_demo.png" alt="ACM Scores Progression" width="400"/>
 </p>
 
 
-Results for Version 2 ($\nu$=0, $\mu$=0):
+Results for Version 2 ($\nu$=0, $\mu$=0, iterations=600):
 <p float="left">
   <img src="readme_images/acm_brain_demo_2.png" alt="ACM Contour Evolution" width="250"/>
-  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="300"/>
+  <img src="readme_images/acm_scores_brain_demo_2.png" alt="ACM Scores Progression" width="400"/>
 </p>
 
-This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyper-parameter settings. 
+This demo shows that the effectiveness of ACM on an image is highly dependent on image-specific hyperparameter settings. 
 
 **Let's try a simple demo for Chan-Vese ACM!**
 
@@ -89,8 +102,7 @@ This demo shows that the effectiveness of ACM on an image is highly dependent on
 
 Refer to the [report](Graduate_Capstone_Report.pdf) for detailed analysis of the two ACMs across different medical images, preprocessing techniques, and contour & hyperparameter initialization. It also outlines the motivation for moving forward with level-set ACM (with grayscale preprocessing) and integrating it into a neural network for adaptive contour and hyperparameter settings.
 
-
-### Image Segmentation Usage
+### Edge Segmentation Usage
 Call edge-based segmentation mechanisms (Roberts/Sobel) using the following command in the [POC branch](https://github.com/shairaalam19/medicalimagesegmentation/tree/POC): 
 ```bash
 python image_segmentation/edge_based.py
@@ -199,15 +211,27 @@ Testing complete! Images saved to demo/output/test_results/20250922_202702/epoch
 **Output Description**
 The first part depicts the training process. You can see that 3 epochs occur and in each epoch the 8 training images go through a forwards pass and the loss is backpropagated and recorded. The terminal output shows print statements of the ACM parameters (num_iters, nu, mu) generated for each image for the ACM (contour refinement) in the forward pass. Backpropagating over these ACM iterations is computationally intensive, which is why using an initial pretrained baseline model increases efficiency and accuracy. Once training completes the model for each epoch is stored under a timestamp subdirectory in the [demo model output folder](demo/output/model). Also a plot of the training loss over epochs is saved.
 
-The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting cloud masks are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
+The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting cloud masks and test metrics are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
 
-Attached are the training losses over epochs and the results of testing the final model on the two test images. 'a' represents intensity image, 'b' represents the predicted segmentation output of the trained model, and 'c' represents ground truth segmentation.
+Attached are the training losses over epochs and the results of testing the final model on the two test images. 'a' represents intensity image, 'b' represents the predicted segmentation output of the trained model, and 'c' represents ground truth segmentation. The overall test metrics are also displayed.
 
 <img src="readme_images/training_loss_per_batch.png" alt="Training loss per epoch" width="400"/>
 
-<img src="readme_images/bjorke_9.png" alt="Test 1" width="300"/>
-<img src="readme_images/bjorke_10.png" alt="Test 2" width="300"/>
+<img src="readme_images/bjorke_9.png" alt="Test 1" width="500"/>
+<img src="readme_images/bjorke_10.png" alt="Test 2" width="500"/>
 
+```
+"overall_metrics": {
+        "Average Test Loss": 0.30593057721853256,
+        "AUROC": 0.9650019157611955,
+        "AUC": 0.9650019157611955,
+        "Precision": 0.8577514523294225,
+        "Recall (Sensitivity)": 0.8358928005074532,
+        "F1 Score": 0.8466810694465638,
+        "IoU": 0.7277814455245858,
+        "Dice Score": 0.8422963248452655
+    }
+```
 
 These are initial proof of concept demo results. The model’s strong performance on small datasets demonstrates its potential for high-quality segmentation when data is limited. For larger datasets, a more computationally efficient backbone (e.g., a CNN with attention layers) can first be trained extensively, after which an ACM hyperparameter layer can be integrated and fine-tuned on smaller subsets where precise segmentation is critical.
 
