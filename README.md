@@ -236,6 +236,26 @@ Attached are the training losses over epochs and the results of testing the fina
         "Dice Score": 0.8422963248452655
     }
 ```
+**Advanced Demo**
+Another quick demo result utilizes `config_2.json` in the `demo` folder. This demo is identical to the previous except it uses a [Pretrained baseline model](outputs/models/final_results/edge_cnn/epoch_50.pth) that has been trained for 50 epochs. Moreover, we now train the hybrid model for 10 epochs. The results below indicate better training losses and test performance.
+
+<img src="readme_images/training_loss_per_batch_2.png" alt="Training loss per epoch" width="400"/>
+
+<img src="readme_images/bjorke_9_2.png" alt="Test 1" width="500"/>
+<img src="readme_images/bjorke_10_2.png" alt="Test 2" width="500"/>
+
+```
+"overall_metrics": {
+        "Average Test Loss": 0.12984604015946388,
+        "AUROC": 0.9690833619943976,
+        "AUC": 0.9690833619943976,
+        "Precision": 0.8953609883859361,
+        "Recall (Sensitivity)": 0.8587059942911512,
+        "F1 Score": 0.8766504989541714,
+        "IoU": 0.7702477719683208,
+        "Dice Score": 0.8698584164685407
+    }
+```
 
 These are initial proof of concept demo results. The model’s strong performance on small datasets demonstrates its potential for high-quality segmentation when data is limited. For larger datasets, a more computationally efficient backbone (e.g., a CNN with attention layers) can first be trained extensively, after which an ACM hyperparameter layer can be integrated and fine-tuned on smaller subsets where precise segmentation is critical.
 
