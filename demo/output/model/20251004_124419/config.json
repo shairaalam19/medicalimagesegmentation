@@ -1,0 +1,46 @@
+{
+    "DEMO": false,
+    "PRETRAINING": true,
+    "TRAIN": true,
+    "TEST": true,
+    
+    "TRAIN_DATASET_SIZE": 8,
+    "TEST_DATASET_SIZE": 2,
+    "TRAINING_BATCH_SIZE": 4,
+    "TEST_BATCH_SIZE": 1,
+    "TOTAL_IMAGES": null,
+    "GET_SMALLER_DATASET": false,
+    "DEMO_DATASET_SIZE": null,
+    "SAVE_TEST_SPLIT": false,
+    "TEST_SPLIT_RATIO": null,
+
+    "TRAIN_INPUT_DATASET": "demo/data/train/input",
+    "TRAIN_TARGET_DATASET": "demo/data/train/target",
+    "TEST_INPUT_DATASET": "demo/data/test/input",
+    "TEST_TARGET_DATASET": "demo/data/test/target",
+    "INPUT_DATASET_FOLDER": null,
+    "TARGET_DATASET_FOLDER": null,
+
+    "EDGE_ATTENTION": true,
+    "DEFINE_EDGES_BEFORE": false,
+    "DEFINE_EDGES_AFTER": false,
+    "ACM": true,
+
+    "LOAD_MODEL_FOLDER": "outputs/models/final_results/edge_cnn", 
+    "MODEL_NAME": "epoch_50.pth",
+
+    "EPOCHS": 10,
+    "LEARNING_RATE": 0.001,
+    "PATIENCE": 7,
+
+    "BCE_LOSS": true,
+    "COMPOSITE_LOSS": false,
+    "IOU_LOSS": false,
+    "DICE_LOSS": false,
+    "GET_TRAINING_LOSS_GRAPH": false,
+    "LOSS_FILE_PATH": null,
+
+    "TRAINED_MODEL_FOLDER": "demo/output/model/",
+    "TEST_RESULTS_FOLDER": "demo/output/test_results",
+    "DEMO_RESULTS_FOLDER": null
+}
