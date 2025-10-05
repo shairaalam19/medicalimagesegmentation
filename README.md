@@ -143,6 +143,7 @@ The [demo](demo) folder in the main branch has the following contents:
 This small demo was done to closely follow the training process on any local machine (w/o requiring GPU) and to ensure that ACM hyperparameters are being learned.
   
 **Instructions**
+
 Make sure you are in the [main branch source directory](https://github.com/shairaalam19/medicalimagesegmentation/tree/main).
 
 ```sh
@@ -213,6 +214,7 @@ Testing complete! Images saved to demo/output/test_results/20250922_202702/epoch
 ```
 
 **Output Description**
+
 The first part depicts the training process. You can see that 3 epochs occur and in each epoch the 8 training images go through a forwards pass and the loss is backpropagated and recorded. The terminal output shows print statements of the ACM parameters (num_iters, $\nu$, $\mu$) generated for each image in the forward pass. Backpropagating over these ACM iterations is computationally intensive, which is why using an initial pretrained baseline model increases efficiency and accuracy. Once training completes the model for each epoch is stored under a timestamp subdirectory in the [demo model output folder](demo/output/model). Also a plot of the training loss over epochs is saved.
 
 The second part depicts the testing process. The model from the final epoch is tested on the test images. The resulting lesion masks and test metrics are saved in a 'timestamp/epoch' subdirectory of the [demo test output folder](demo/output/test_results).
@@ -237,6 +239,7 @@ Attached are the training losses over epochs and the results of testing the fina
     }
 ```
 **Advanced Demo**
+
 Another quick demo result utilizes `config_2.json` in the `demo` folder. This demo is identical to the previous except it uses a [Pretrained baseline model](outputs/models/final_results/edge_cnn/epoch_50.pth) that has been trained for 50 epochs. Moreover, we now train the hybrid model for 10 epochs. The results below indicate better training losses and test performance.
 
 <img src="readme_images/training_loss_per_batch_2.png" alt="Training loss per epoch" width="400"/>
